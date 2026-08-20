@@ -1,0 +1,197 @@
+import mediapipe as mp
+import numpy as np
+import cv2
+
+
+# 使い方の例
+# finger = Fingertracking()
+# cap = cv2.VideoCapture(0)
+# while True:
+#    ret,img = cap.read()
+#    finger.doTracking(img)
+#    print(finger.getRawPosition() )
+#    if cv2.waitKey(1) == 27:
+#        break
+#
+#これで出力に各検出ポイントの座標が表示されます。
+#デバッグ用にfinger.doTracking(img,True)にすると、画像に図示されるはずです
+#
+#finger.doTracking(img)の戻り値は辞書形式です。
+#finger.getRawPosition.get(0)で手首の位置の生データが取れます。トラッキング失敗時はKeyerrorになるため、get()で辞書から値をとることをお勧めします。
+#
+
+
+
+class Fingertracking():
+
+    __mp_hands = mp.tasks.vision.HandLandmarksConnections
+    __mp_drawing = mp.tasks.vision.drawing_utils
+    __mp_drawing_styles = mp.tasks.vision.drawing_styles
+
+    MARGIN = 10
+    FONT_SIZE = 1
+    FONT_THICKNESS = 1
+    HANDEDNESS_TEXT_COLOR = (88, 205, 54)
+
+
+    def draw_landmarks_on_image(self, rgb_image, detection_result):
+        hand_landmarks_list = detection_result.hand_landmarks
+        handedness_list = detection_result.handedness
+        annotated_image = np.copy(rgb_image)
+
+        for idx in range(len(hand_landmarks_list)):
+            hand_landmarks = hand_landmarks_list[idx]
+
+            # ランドマーク描画
+            self.__mp_drawing.draw_landmarks(
+                annotated_image,
+                hand_landmarks,
+                self.__mp_hands.HAND_CONNECTIONS,
+                self.__mp_drawing_styles.get_default_hand_landmarks_style(),
+                self.__mp_drawing_styles.get_default_hand_connections_style()
+            )
+
+            # テキスト表示位置
+            height, width, _ = annotated_image.shape
+            x_coordinates = [landmark.x for landmark in hand_landmarks]
+            y_coordinates = [landmark.y for landmark in hand_landmarks]
+
+            text_x = int(min(x_coordinates) * width)
+            text_y = int(min(y_coordinates) * height) - self.MARGIN
+
+            # 元の認識結果
+            handedness = handedness_list[idx][0].category_name
+
+            # 左右反転しているので入れ替え
+            if handedness == "Left":
+                handedness_text = "Right"
+            else:
+                handedness_text = "Left"
+
+            cv2.putText(
+                annotated_image,
+                handedness_text,
+                (text_x, text_y),
+                cv2.FONT_HERSHEY_DUPLEX,
+                self.FONT_SIZE,
+                self.HANDEDNESS_TEXT_COLOR,
+                self.FONT_THICKNESS,
+                cv2.LINE_AA
+            )
+
+        return annotated_image
+
+    def doTracking(self,img,debug = False):
+        frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+        # mediapipe.Image に変換
+        mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB,
+                data=img
+           )
+
+            # 手検出
+        self.raw_results = self.recognizer.recognize(mp_image)
+
+        # 検出結果描画
+        if debug:
+            if self.raw_results.hand_landmarks:
+                annotated_rgb = self.draw_landmarks_on_image(frame, self.raw_results)
+                #print(results.hand_landmarks)
+                # RGB -> BGR
+                frame = cv2.cvtColor(
+                    annotated_rgb,
+                    cv2.COLOR_RGB2BGR
+                )
+            cv2.imshow("Hand Tracking", frame)
+
+
+    def camera_loop(self, cap, recognizer):
+        while True:
+            success, frame = cap.read()
+
+            if not success:
+                break
+
+            # 左右反転
+            frame = cv2.flip(frame, 1)
+
+            # BGR -> RGB
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+
+
+            # mediapipe.Image に変換
+            mp_image = mp.Image(
+                image_format=mp.ImageFormat.SRGB,
+                data=rgb
+            )
+
+            # 手検出
+            self.raw_results = recognizer.recognize(mp_image)
+
+            # 検出結果描画
+            if self.results.hand_landmarks:
+                annotated_rgb = self.draw_landmarks_on_image(rgb, self.raw_results)
+               # print(self.raw_results.hand_landmarks + "\n")
+                # RGB -> BGR
+                frame = cv2.cvtColor(
+                    annotated_rgb,
+                    cv2.COLOR_RGB2BGR
+                )
+
+            cv2.imshow("Hand Tracking", frame)
+
+            # ESCで終了
+            if cv2.waitKey(1) == 27:
+                break
+
+
+    def getRawTrackingData(self):
+        return self.raw_results
+
+    # 生の状態で座標を返します。 検出ポイント番号がラベル、xyz座標のリストが要素の辞書が戻り値です。
+    def getRawPosition(self):
+        pos = {}
+    
+        if not self.raw_results or not self.raw_results.hand_landmarks:
+            return pos 
+            
+        first_hand_landmarks = self.raw_results.hand_landmarks[0]
+        
+        for i, dat in enumerate(first_hand_landmarks):
+            pos.update({i: (dat.x, dat.y, dat.z)})
+            
+        return pos
+
+
+    def __init__(self):
+        BaseOptions = mp.tasks.BaseOptions
+        GestureRecognizer = mp.tasks.vision.GestureRecognizer
+        GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
+        VisionRunningMode = mp.tasks.vision.RunningMode
+
+        model_path = "gesture_recognizer.task"
+
+        options = GestureRecognizerOptions(
+            base_options=BaseOptions(
+                model_asset_path=model_path
+            ),
+            running_mode=VisionRunningMode.IMAGE
+        )
+
+        self.recognizer = GestureRecognizer.create_from_options(options)
+
+            
+            # カメラ起動
+            #cap = cv2.VideoCapture(0)
+
+            #try:
+                #self.camera_loop(cap, recognizer)
+
+            #finally:
+                # エラー時でもちゃんと閉じる
+                #cap.release()
+                #cv2.destroyAllWindows()
+
+
+
