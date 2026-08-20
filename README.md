@@ -4,5 +4,6 @@
 ```python
 pip install mediapipe
 ```
-- mediapipe tasksのモデルをダウンロードしてください
-  mediapipe_sample内のdownload-requirements.pyを実行してください。
+- mediapipe tasksのモデルをダウンロードしてください  
+  mediapipe_sample内のdownload-requirements.pyを実行してください。  
+  その後、hand-tracking-sampleを実行するとハンドトラッキングのサンプルが確認できます。
