@@ -9,7 +9,7 @@ import cv2
 # while True:
 #    ret,img = cap.read()
 #    finger.doTracking(img)
-#    print(finger.getRawPosition() )
+#    print(finger.getRawPosition().get(0) )
 #    if cv2.waitKey(1) == 27:
 #        break
 #
@@ -18,7 +18,7 @@ import cv2
 #
 #finger.doTracking(img)の戻り値は辞書形式です。
 #finger.getRawPosition.get(0)で手首の位置の生データが取れます。トラッキング失敗時はKeyerrorになるため、get()で辞書から値をとることをお勧めします。
-#
+#finger.getNormalizedPosition().get(0)で手首の位置の正規化済みの位置が取れます。
 
 
 
@@ -124,8 +124,9 @@ class Fingertracking():
         return pos
 
     #Y軸のスケールをX軸、Z軸に揃えたときの座標を返します。
-    def getnormalizedPosition(self):
+    def getNormalizedPosition(self):
         pos = {}
+
     
         if not self.raw_results or not self.raw_results.hand_landmarks:
             return pos 
@@ -158,13 +159,19 @@ class Fingertracking():
         self.recognizer = GestureRecognizer.create_from_options(options)
 
 
+#デバッグ用
+finger = Fingertracking()
+cap = cv2.VideoCapture(0)
+
+while True:
+    ret,img = cap.read()
+    finger.doTracking(img,True)
+    print(finger.getNormalizedPosition().get(0) )
+
+    if cv2.waitKey(1) == 27:
+       break
 
 
-#finger = Fingertracking()
-#cap = cv2.VideoCapture(0)
-#while True:
-#   ret,img = cap.read()
-#   finger.doTracking(img,True)
-#   print(finger.getnormalizedPosition().get(0) )
-#   if cv2.waitKey(1) == 27:
-#       break
+
+
+
