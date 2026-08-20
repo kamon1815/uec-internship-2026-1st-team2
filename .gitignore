@@ -32,6 +32,9 @@
 *.app
 *.onnx
 
+# AI models
+.task
+
 cache/
 onnx/
 ddcolor_sample/output/
