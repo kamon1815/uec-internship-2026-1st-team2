@@ -2,6 +2,7 @@ import mediapipe as mp
 import numpy as np
 import cv2
 
+
 mp_hands = mp.tasks.vision.HandLandmarksConnections
 mp_drawing = mp.tasks.vision.drawing_utils
 mp_drawing_styles = mp.tasks.vision.drawing_styles
@@ -88,7 +89,7 @@ def camera_loop(cap, recognizer):
         # 検出結果描画
         if results.hand_landmarks:
             annotated_rgb = draw_landmarks_on_image(rgb, results)
-
+            print(results.hand_landmarks)
             # RGB -> BGR
             frame = cv2.cvtColor(
                 annotated_rgb,
