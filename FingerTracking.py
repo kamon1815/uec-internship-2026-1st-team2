@@ -195,12 +195,3 @@ class Fingertracking():
 
 
 
-finger = Fingertracking()
-cap = cv2.VideoCapture(0)
-while True:
-   ret,img = cap.read()
-   finger.doTracking(img,True)
-   p = finger.getRawPosition()
-   print(p.get(0) )
-   if cv2.waitKey(1) == 27:
-       break
