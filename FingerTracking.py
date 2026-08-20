@@ -9,7 +9,7 @@ import cv2
 # while True:
 #    ret,img = cap.read()
 #    finger.doTracking(img)
-#    print(finger.getRawPosition() )
+#    print(finger.getRawPosition().get(0) )
 #    if cv2.waitKey(1) == 27:
 #        break
 #
@@ -18,7 +18,7 @@ import cv2
 #
 #finger.doTracking(img)の戻り値は辞書形式です。
 #finger.getRawPosition.get(0)で手首の位置の生データが取れます。トラッキング失敗時はKeyerrorになるため、get()で辞書から値をとることをお勧めします。
-#
+#finger.getNormalizedPosition().get(0)で手首の位置の正規化済みの位置が取れます。
 
 
 
@@ -27,7 +27,7 @@ class Fingertracking():
     __mp_hands = mp.tasks.vision.HandLandmarksConnections
     __mp_drawing = mp.tasks.vision.drawing_utils
     __mp_drawing_styles = mp.tasks.vision.drawing_styles
-
+    
     MARGIN = 10
     FONT_SIZE = 1
     FONT_THICKNESS = 1
@@ -52,12 +52,12 @@ class Fingertracking():
             )
 
             # テキスト表示位置
-            height, width, _ = annotated_image.shape
+            self.__height, self.__width, _ = annotated_image.shape
             x_coordinates = [landmark.x for landmark in hand_landmarks]
             y_coordinates = [landmark.y for landmark in hand_landmarks]
 
-            text_x = int(min(x_coordinates) * width)
-            text_y = int(min(y_coordinates) * height) - self.MARGIN
+            text_x = int(min(x_coordinates) * self.__width)
+            text_y = int(min(y_coordinates) * self.__height) - self.MARGIN
 
             # 元の認識結果
             handedness = handedness_list[idx][0].category_name
@@ -82,7 +82,9 @@ class Fingertracking():
         return annotated_image
 
     def doTracking(self,img,debug = False):
-        frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+        frame = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+       # frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
         # mediapipe.Image に変換
         mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
@@ -104,48 +106,6 @@ class Fingertracking():
                 )
             cv2.imshow("Hand Tracking", frame)
 
-
-    def camera_loop(self, cap, recognizer):
-        while True:
-            success, frame = cap.read()
-
-            if not success:
-                break
-
-            # 左右反転
-            frame = cv2.flip(frame, 1)
-
-            # BGR -> RGB
-            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-            rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-
-
-            # mediapipe.Image に変換
-            mp_image = mp.Image(
-                image_format=mp.ImageFormat.SRGB,
-                data=rgb
-            )
-
-            # 手検出
-            self.raw_results = recognizer.recognize(mp_image)
-
-            # 検出結果描画
-            if self.results.hand_landmarks:
-                annotated_rgb = self.draw_landmarks_on_image(rgb, self.raw_results)
-               # print(self.raw_results.hand_landmarks + "\n")
-                # RGB -> BGR
-                frame = cv2.cvtColor(
-                    annotated_rgb,
-                    cv2.COLOR_RGB2BGR
-                )
-
-            cv2.imshow("Hand Tracking", frame)
-
-            # ESCで終了
-            if cv2.waitKey(1) == 27:
-                break
-
-
     def getRawTrackingData(self):
         return self.raw_results
 
@@ -160,6 +120,23 @@ class Fingertracking():
         
         for i, dat in enumerate(first_hand_landmarks):
             pos.update({i: (dat.x, dat.y, dat.z)})
+            
+        return pos
+
+    #Y軸のスケールをX軸、Z軸に揃えたときの座標を返します。
+    def getNormalizedPosition(self):
+        pos = {}
+
+    
+        if not self.raw_results or not self.raw_results.hand_landmarks:
+            return pos 
+            
+        first_hand_landmarks = self.raw_results.hand_landmarks[0]
+
+        ratio = self.__height / self.__width
+        
+        for i, dat in enumerate(first_hand_landmarks):
+            pos.update({i: (dat.x, dat.y * ratio, dat.z)})
             
         return pos
 
@@ -181,17 +158,20 @@ class Fingertracking():
 
         self.recognizer = GestureRecognizer.create_from_options(options)
 
-            
-            # カメラ起動
-            #cap = cv2.VideoCapture(0)
 
-            #try:
-                #self.camera_loop(cap, recognizer)
+#デバッグ用
+finger = Fingertracking()
+cap = cv2.VideoCapture(0)
 
-            #finally:
-                # エラー時でもちゃんと閉じる
-                #cap.release()
-                #cv2.destroyAllWindows()
+while True:
+    ret,img = cap.read()
+    finger.doTracking(img,True)
+    print(finger.getNormalizedPosition().get(0) )
+
+    if cv2.waitKey(1) == 27:
+       break
+
+
 
 
 
