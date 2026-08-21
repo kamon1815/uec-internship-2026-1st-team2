@@ -16,7 +16,7 @@ from  InfinicamManeger import InfinicamManager
 #これで出力に各検出ポイントの座標が表示されます。
 #Fingertracking(1.0,1.0)のように左から順にコントラスト、明るさを設定できます。コントラストは1より大きいと高くなります。
 #デバッグ用にfinger.doTracking(img,debug = True)にすると、画像に図示されるはずです
-#
+#finger.getGesture()でジェスチャー認識の結果を文字列でかえします。
 #finger.doTracking(img)の戻り値は辞書形式です。
 #finger.getRawPosition.get(0)で手首の位置の生データが取れます。トラッキング失敗時はKeyerrorになるため、get()で辞書から値をとることをお勧めします。
 #finger.getNormalizedPosition().get(0)で手首の位置の正規化済みの位置が取れます。
@@ -118,6 +118,7 @@ class Fingertracking():
                     frame,
                     cv2.COLOR_RGB2BGR
                 )
+
             cv2.imshow("Hand Tracking", frame)
 
 
@@ -156,6 +157,16 @@ class Fingertracking():
         return pos
 
 
+    def getGesture(self):
+        result = self.getRawTrackingData()
+        for i, gestures in enumerate(result.gestures):
+            gesture = gestures[0]
+            handedness = result.handedness[i][0].category_name
+            text = f"{gesture.category_name}"
+            if text != "Thumb_Down" and text != "Thumb_Up" and text != "ILoveYou" and text != "Pointing_Up":
+                return text
+            return None
+
     def __init__(self,contrast = 1.0, light = 1.0):
         BaseOptions = mp.tasks.BaseOptions
         GestureRecognizer = mp.tasks.vision.GestureRecognizer
@@ -179,13 +190,13 @@ class Fingertracking():
 
 #デバッグ用
 if __name__ == "__main__":
-    finger = Fingertracking(2.4,10)
-    #cap = cv2.VideoCapture(0)
+    finger = Fingertracking(2.4,5)
+    cap = cv2.VideoCapture(0)
     infinicam = InfinicamManager()
     infinicam.connect(800)
     filter = cv2.COLORMAP_JET
     while True:
-        #ret,img = cap.read()
+        ret,img = cap.read()
         img = infinicam.get_frame()
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         key = cv2.waitKey(1)
