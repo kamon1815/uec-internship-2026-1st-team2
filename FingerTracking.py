@@ -191,12 +191,12 @@ class Fingertracking():
 #デバッグ用
 if __name__ == "__main__":
     finger = Fingertracking(2.4,5)
-    cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture(0)
     infinicam = InfinicamManager()
     infinicam.connect(800)
     filter = cv2.COLORMAP_JET
     while True:
-        ret,img = cap.read()
+        #ret,img = cap.read()
         img = infinicam.get_frame()
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         key = cv2.waitKey(1)
