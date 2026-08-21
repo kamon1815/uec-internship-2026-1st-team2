@@ -1,7 +1,7 @@
 import mediapipe as mp
 import numpy as np
 import cv2
-
+from  InfinicamManeger import InfinicamManager
 
 # 使い方の例
 # finger = Fingertracking()
@@ -81,30 +81,38 @@ class Fingertracking():
 
         return annotated_image
 
-    def doTracking(self,img,debug = False):
-        frame = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-       # frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET):
+
+        edge = cv2.blur(img,(5,5))
+        edge = cv2.Canny(edge,30,80)
+        edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
+
+        mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
+        mixed = cv2.convertScaleAbs(mixed, alpha=1.7, beta=2.3)
+        gray = cv2.cvtColor(mixed,cv2.COLOR_BGR2GRAY)
+        mappedimg = cv2.applyColorMap(gray, colorFillter)
+        frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
+        #frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
         # mediapipe.Image に変換
         mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
                 data=img
            )
-
-            # 手検出
+        # 手検出
         self.raw_results = self.recognizer.recognize(mp_image)
 
         # 検出結果描画
         if debug:
             if self.raw_results.hand_landmarks:
-                annotated_rgb = self.draw_landmarks_on_image(frame, self.raw_results)
+                frame = self.draw_landmarks_on_image(frame, self.raw_results)
                 #print(results.hand_landmarks)
                 # RGB -> BGR
-                frame = cv2.cvtColor(
-                    annotated_rgb,
+            frame = cv2.cvtColor(
+                    frame,
                     cv2.COLOR_RGB2BGR
                 )
             cv2.imshow("Hand Tracking", frame)
+
 
     def getRawTrackingData(self):
         return self.raw_results
@@ -160,16 +168,36 @@ class Fingertracking():
 
 
 #デバッグ用
-finger = Fingertracking()
-cap = cv2.VideoCapture(0)
+if __name__ == "__main__":
+    finger = Fingertracking()
+    #cap = cv2.VideoCapture(0)
+    infinicam = InfinicamManager()
+    infinicam.connect(800)
+    filter = cv2.COLORMAP_JET
+    while True:
+        #ret,img = cap.read()
+        img = infinicam.get_frame()
+        img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+        key = cv2.waitKey(1)
+        if key ==  ord('q'):
+            filter = cv2.COLORMAP_BONE
+        if key ==  ord('w'):
+            filter = cv2.COLORMAP_JET
+        if key ==  ord('e'):
+            filter = cv2.COLORMAP_VIRIDIS
+        if key ==  ord('r'):
+            filter = cv2.COLORMAP_PINK
+        if key ==  ord('t'):
+            filter = cv2.COLORMAP_HOT
 
-while True:
-    ret,img = cap.read()
-    finger.doTracking(img,True)
-    print(finger.getNormalizedPosition().get(0) )
 
-    if cv2.waitKey(1) == 27:
-       break
+        finger.doTracking(img,debug = True,colorFillter=filter)
+        print(finger.getNormalizedPosition().get(0) )
+
+        if key == 27:
+           break
+
+    infinicam.close()
 
 
 
