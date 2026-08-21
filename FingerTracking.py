@@ -1,7 +1,7 @@
 import mediapipe as mp
 import numpy as np
 import cv2
-
+from  InfinicamManeger import InfinicamManager
 
 # 使い方の例
 # finger = Fingertracking()
@@ -9,16 +9,17 @@ import cv2
 # while True:
 #    ret,img = cap.read()
 #    finger.doTracking(img)
-#    print(finger.getRawPosition() )
+#    print(finger.getRawPosition().get(0) )
 #    if cv2.waitKey(1) == 27:
 #        break
 #
 #これで出力に各検出ポイントの座標が表示されます。
-#デバッグ用にfinger.doTracking(img,True)にすると、画像に図示されるはずです
-#
+#Fingertracking(1.0,1.0)のように左から順にコントラスト、明るさを設定できます。コントラストは1より大きいと高くなります。
+#デバッグ用にfinger.doTracking(img,debug = True)にすると、画像に図示されるはずです
+#finger.getGesture()でジェスチャー認識の結果を文字列でかえします。
 #finger.doTracking(img)の戻り値は辞書形式です。
 #finger.getRawPosition.get(0)で手首の位置の生データが取れます。トラッキング失敗時はKeyerrorになるため、get()で辞書から値をとることをお勧めします。
-#
+#finger.getNormalizedPosition().get(0)で手首の位置の正規化済みの位置が取れます。
 
 
 
@@ -27,6 +28,9 @@ class Fingertracking():
     __mp_hands = mp.tasks.vision.HandLandmarksConnections
     __mp_drawing = mp.tasks.vision.drawing_utils
     __mp_drawing_styles = mp.tasks.vision.drawing_styles
+
+    __contrast = 1.0
+    __light =1.0
 
     MARGIN = 10
     FONT_SIZE = 1
@@ -52,12 +56,12 @@ class Fingertracking():
             )
 
             # テキスト表示位置
-            height, width, _ = annotated_image.shape
+            self.__height, self.__width, _ = annotated_image.shape
             x_coordinates = [landmark.x for landmark in hand_landmarks]
             y_coordinates = [landmark.y for landmark in hand_landmarks]
 
-            text_x = int(min(x_coordinates) * width)
-            text_y = int(min(y_coordinates) * height) - self.MARGIN
+            text_x = int(min(x_coordinates) * self.__width)
+            text_y = int(min(y_coordinates) * self.__height) - self.MARGIN
 
             # 元の認識結果
             handedness = handedness_list[idx][0].category_name
@@ -81,69 +85,41 @@ class Fingertracking():
 
         return annotated_image
 
-    def doTracking(self,img,debug = False):
-        frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET,useColor=False):
+
+        edge = cv2.blur(img,(5,5))
+        edge = cv2.Canny(edge,30,80)
+        edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
+
+        mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
+        frame = cv2.convertScaleAbs(mixed, alpha=self.__contrast, beta=self.__light)
+        if useColor == False:
+            gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            mappedimg = cv2.applyColorMap(gray, colorFillter)
+            frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
+        else: 
+            frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+
         # mediapipe.Image に変換
         mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
                 data=img
            )
-
-            # 手検出
+        # 手検出
         self.raw_results = self.recognizer.recognize(mp_image)
 
         # 検出結果描画
         if debug:
             if self.raw_results.hand_landmarks:
-                annotated_rgb = self.draw_landmarks_on_image(frame, self.raw_results)
+                frame = self.draw_landmarks_on_image(frame, self.raw_results)
                 #print(results.hand_landmarks)
                 # RGB -> BGR
-                frame = cv2.cvtColor(
-                    annotated_rgb,
-                    cv2.COLOR_RGB2BGR
-                )
-            cv2.imshow("Hand Tracking", frame)
-
-
-    def camera_loop(self, cap, recognizer):
-        while True:
-            success, frame = cap.read()
-
-            if not success:
-                break
-
-            # 左右反転
-            frame = cv2.flip(frame, 1)
-
-            # BGR -> RGB
-            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-            rgb = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-
-
-            # mediapipe.Image に変換
-            mp_image = mp.Image(
-                image_format=mp.ImageFormat.SRGB,
-                data=rgb
-            )
-
-            # 手検出
-            self.raw_results = recognizer.recognize(mp_image)
-
-            # 検出結果描画
-            if self.results.hand_landmarks:
-                annotated_rgb = self.draw_landmarks_on_image(rgb, self.raw_results)
-               # print(self.raw_results.hand_landmarks + "\n")
-                # RGB -> BGR
-                frame = cv2.cvtColor(
-                    annotated_rgb,
+            frame = cv2.cvtColor(
+                    frame,
                     cv2.COLOR_RGB2BGR
                 )
 
             cv2.imshow("Hand Tracking", frame)
-
-            # ESCで終了
-            if cv2.waitKey(1) == 27:
-                break
 
 
     def getRawTrackingData(self):
@@ -163,14 +139,44 @@ class Fingertracking():
             
         return pos
 
+    #Y軸のスケールをX軸、Z軸に揃えたときの座標を返します。
+    def getNormalizedPosition(self):
+        pos = {}
 
-    def __init__(self):
+    
+        if not self.raw_results or not self.raw_results.hand_landmarks:
+            return pos 
+            
+        first_hand_landmarks = self.raw_results.hand_landmarks[0]
+
+        ratio = self.__height / self.__width
+        
+        for i, dat in enumerate(first_hand_landmarks):
+            pos.update({i: (dat.x, dat.y * ratio, dat.z)})
+            
+        return pos
+
+
+    def getGesture(self):
+        result = self.getRawTrackingData()
+        for i, gestures in enumerate(result.gestures):
+            gesture = gestures[0]
+            handedness = result.handedness[i][0].category_name
+            text = f"{gesture.category_name}"
+            if text != "Thumb_Down" and text != "Thumb_Up" and text != "ILoveYou" and text != "Pointing_Up":
+                return text
+            return None
+
+    def __init__(self,contrast = 1.0, light = 1.0):
         BaseOptions = mp.tasks.BaseOptions
         GestureRecognizer = mp.tasks.vision.GestureRecognizer
         GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
         VisionRunningMode = mp.tasks.vision.RunningMode
 
         model_path = "gesture_recognizer.task"
+
+        self.__contrast = contrast
+        self.__light = light
 
         options = GestureRecognizerOptions(
             base_options=BaseOptions(
@@ -181,17 +187,40 @@ class Fingertracking():
 
         self.recognizer = GestureRecognizer.create_from_options(options)
 
-            
-            # カメラ起動
-            #cap = cv2.VideoCapture(0)
 
-            #try:
-                #self.camera_loop(cap, recognizer)
+#デバッグ用
+if __name__ == "__main__":
+    finger = Fingertracking(2.4,7)
+    #cap = cv2.VideoCapture(0)
+    infinicam = InfinicamManager()
+    infinicam.connect(800)
+    filter = cv2.COLORMAP_JET
+    while True:
+        #ret,img = cap.read()
+        img = infinicam.get_frame()
+        img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+        key = cv2.waitKey(1)
+        if key ==  ord('q'):
+            filter = cv2.COLORMAP_BONE
+        if key ==  ord('w'):
+            filter = cv2.COLORMAP_JET
+        if key ==  ord('e'):
+            filter = cv2.COLORMAP_VIRIDIS
+        if key ==  ord('r'):
+            filter = cv2.COLORMAP_PINK
+        if key ==  ord('t'):
+            filter = cv2.COLORMAP_HOT
 
-            #finally:
-                # エラー時でもちゃんと閉じる
-                #cap.release()
-                #cv2.destroyAllWindows()
+
+        finger.doTracking(img,debug = True,colorFillter=filter,useColor=False)
+        print(finger.getNormalizedPosition().get(0) )
+
+        if key == 27:
+           break
+
+    infinicam.close()
+
+
 
 
 
