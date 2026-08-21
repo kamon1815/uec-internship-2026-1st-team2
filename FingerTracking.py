@@ -14,7 +14,8 @@ from  InfinicamManeger import InfinicamManager
 #        break
 #
 #これで出力に各検出ポイントの座標が表示されます。
-#デバッグ用にfinger.doTracking(img,True)にすると、画像に図示されるはずです
+#Fingertracking(1.0,1.0)のように左から順にコントラスト、明るさを設定できます。コントラストは1より大きいと高くなります。
+#デバッグ用にfinger.doTracking(img,debug = True)にすると、画像に図示されるはずです
 #
 #finger.doTracking(img)の戻り値は辞書形式です。
 #finger.getRawPosition.get(0)で手首の位置の生データが取れます。トラッキング失敗時はKeyerrorになるため、get()で辞書から値をとることをお勧めします。
@@ -27,7 +28,10 @@ class Fingertracking():
     __mp_hands = mp.tasks.vision.HandLandmarksConnections
     __mp_drawing = mp.tasks.vision.drawing_utils
     __mp_drawing_styles = mp.tasks.vision.drawing_styles
-    
+
+    __contrast = 1.0
+    __light =1.0
+
     MARGIN = 10
     FONT_SIZE = 1
     FONT_THICKNESS = 1
@@ -81,18 +85,21 @@ class Fingertracking():
 
         return annotated_image
 
-    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET):
+    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET,useColor=False):
 
         edge = cv2.blur(img,(5,5))
         edge = cv2.Canny(edge,30,80)
         edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
 
         mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
-        mixed = cv2.convertScaleAbs(mixed, alpha=1.7, beta=2.3)
-        gray = cv2.cvtColor(mixed,cv2.COLOR_BGR2GRAY)
-        mappedimg = cv2.applyColorMap(gray, colorFillter)
-        frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
-        #frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+        frame = cv2.convertScaleAbs(mixed, alpha=self.__contrast, beta=self.__light)
+        if useColor == False:
+            gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+            mappedimg = cv2.applyColorMap(gray, colorFillter)
+            frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
+        else: 
+            frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+
         # mediapipe.Image に変換
         mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
@@ -149,13 +156,16 @@ class Fingertracking():
         return pos
 
 
-    def __init__(self):
+    def __init__(self,contrast = 1.0, light = 1.0):
         BaseOptions = mp.tasks.BaseOptions
         GestureRecognizer = mp.tasks.vision.GestureRecognizer
         GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
         VisionRunningMode = mp.tasks.vision.RunningMode
 
         model_path = "gesture_recognizer.task"
+
+        self.__contrast = contrast
+        self.__light = light
 
         options = GestureRecognizerOptions(
             base_options=BaseOptions(
@@ -169,7 +179,7 @@ class Fingertracking():
 
 #デバッグ用
 if __name__ == "__main__":
-    finger = Fingertracking()
+    finger = Fingertracking(1.8,1)
     #cap = cv2.VideoCapture(0)
     infinicam = InfinicamManager()
     infinicam.connect(800)
@@ -191,7 +201,7 @@ if __name__ == "__main__":
             filter = cv2.COLORMAP_HOT
 
 
-        finger.doTracking(img,debug = True,colorFillter=filter)
+        finger.doTracking(img,debug = True,colorFillter=filter,useColor=False)
         print(finger.getNormalizedPosition().get(0) )
 
         if key == 27:
