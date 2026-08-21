@@ -81,30 +81,32 @@ class Fingertracking():
 
         return annotated_image
 
-    def doTracking(self,img,debug = False):
-        frame = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
-       # frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_BONE):
+ 
+        gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        mappedimg = cv2.applyColorMap(gray, colorFillter)
+        frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
+        #frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
         # mediapipe.Image に変換
         mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
                 data=img
            )
-
-            # 手検出
+        # 手検出
         self.raw_results = self.recognizer.recognize(mp_image)
 
         # 検出結果描画
         if debug:
             if self.raw_results.hand_landmarks:
-                annotated_rgb = self.draw_landmarks_on_image(frame, self.raw_results)
+                frame = self.draw_landmarks_on_image(frame, self.raw_results)
                 #print(results.hand_landmarks)
                 # RGB -> BGR
-                frame = cv2.cvtColor(
-                    annotated_rgb,
+            frame = cv2.cvtColor(
+                    frame,
                     cv2.COLOR_RGB2BGR
                 )
             cv2.imshow("Hand Tracking", frame)
+
 
     def getRawTrackingData(self):
         return self.raw_results
@@ -162,13 +164,26 @@ class Fingertracking():
 #デバッグ用
 finger = Fingertracking()
 cap = cv2.VideoCapture(0)
-
+filter = cv2.COLORMAP_BONE
 while True:
     ret,img = cap.read()
-    finger.doTracking(img,True)
+
+    key = cv2.waitKey(1)
+    if key ==  ord('q'):
+        filter = cv2.COLORMAP_BONE
+    if key ==  ord('w'):
+        filter = cv2.COLORMAP_JET
+    if key ==  ord('e'):
+        filter = cv2.COLORMAP_VIRIDIS
+    if key ==  ord('r'):
+        filter = cv2.COLORMAP_PINK
+    if key ==  ord('t'):
+        filter = cv2.COLORMAP_HOT
+
+    finger.doTracking(img,debug = True,colorFillter=filter)
     print(finger.getNormalizedPosition().get(0) )
 
-    if cv2.waitKey(1) == 27:
+    if key == 27:
        break
 
 
