@@ -190,7 +190,7 @@ class Fingertracking():
 
 #デバッグ用
 if __name__ == "__main__":
-    finger = Fingertracking(2.4,5)
+    finger = Fingertracking(2.4,7)
     #cap = cv2.VideoCapture(0)
     infinicam = InfinicamManager()
     infinicam.connect(800)
