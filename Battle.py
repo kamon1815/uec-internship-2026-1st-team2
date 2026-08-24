@@ -27,10 +27,14 @@ class Battle:
 
         if self.cameraMode == 0:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(500,1246,1024,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(500,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
 
         if self.cameraMode == 1:
             self.__cap = cv2.VideoCapture(0)
+            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
+            print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.__tracker = Fingertracking()
 

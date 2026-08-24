@@ -67,7 +67,7 @@ class Fingertracking():
             handedness = handedness_list[idx][0].category_name
 
             # 左右反転しているので入れ替え
-            if handedness == "Left":
+            if handedness == "Right":
                 handedness_text = "Right"
             else:
                 handedness_text = "Left"
@@ -87,10 +87,11 @@ class Fingertracking():
 
     def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET,useColor=False):
 
+        #エッジ抽出
         edge = cv2.blur(img,(5,5))
         edge = cv2.Canny(edge,30,80)
         edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
-
+        #元画像とエッジをブレンド
         mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
         frame = cv2.convertScaleAbs(mixed, alpha=self.__contrast, beta=self.__light)
         if useColor == False:
@@ -99,6 +100,7 @@ class Fingertracking():
             frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
         else: 
             frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+
 
         # mediapipe.Image に変換
         mp_image = mp.Image(
@@ -191,9 +193,11 @@ class Fingertracking():
 
         options = GestureRecognizerOptions(
             base_options=BaseOptions(
-                model_asset_path=model_path
+                model_asset_path=model_path,
             ),
-            running_mode=VisionRunningMode.IMAGE
+            running_mode=VisionRunningMode.IMAGE,
+            min_tracking_confidence = 0.4,
+            num_hands = 1
         )
 
         self.recognizer = GestureRecognizer.create_from_options(options)
