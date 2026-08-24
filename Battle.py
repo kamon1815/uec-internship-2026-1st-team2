@@ -49,7 +49,7 @@ class Battle:
         rsp_rates = []
         rsp_gestures = []
         for i in range(amount):
-            for trial in range(maxtrial): #2回目の画像取得。失敗ならmaxtrial回まで再試行。
+            for trial in range(maxtrial): #i回目の画像取得。失敗ならmaxtrial回まで再試行。
 
                 img = self.getCameraImage()
 
@@ -58,7 +58,7 @@ class Battle:
                 if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
                     break
 
-            #1回目の画像について判定する
+            #i回目の画像について判定する
             rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
             rsp_rates.append(rate)
             rsp_gestures.append(gesture)
