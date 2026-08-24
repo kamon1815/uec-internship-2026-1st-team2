@@ -5,6 +5,7 @@
 #この場合は、100ミリ秒間隔で2回の判定を行い、撮影失敗時はそれぞれ最大40回まで再撮影します
 #戻り値は   確率(辞書型),ジェスチャー(文字列)の順です。詳しくはJugdeHandをご確認ください。
 #
+#Battle.pyを実行するとCUIでのじゃんけんの確認ができます。ESCキーで終了します。
 
 from FingerTracking import Fingertracking
 from InfinicamManeger import InfinicamManager
