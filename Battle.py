@@ -84,16 +84,16 @@ class Battle:
             if(oneshotFlags[2]):
                 print("じゃん")
                 oneshotFlags[2] = False
-        if 2.5 <= timeCounter <= 3:
+        if 2.5 <= timeCounter <= 2.9:
             if(oneshotFlags[3]):
                 print("けん")
                 oneshotFlags[3] = False
-        if 3 <= timeCounter <= 4:
+        if 2.9 <= timeCounter <= 4:
             if(oneshotFlags[4]):
                 print("ぽん")
 
                 #ここで骨格認識と判定
-                rpsrates,gestures = self.computeRPS(40,2,100)
+                rpsrates,gestures = self.computeRPS(40,2,200)
                 print(rpsrates)
 
                 #デバッグ用改造済みshowRpsRate
