@@ -30,7 +30,14 @@ class Battle:
 
         self.__judge = JugdeHand()
 
+    def getCameraImage(self):
+        if self.cameraMode == 0:
+            img,defimg = self.__infinicam.get_frame()
+            img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
 
+        if self.cameraMode == 1:
+            ret,img = self.__cap.read()
+        return img
 
     def computeRPS(self, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
@@ -46,6 +53,7 @@ class Battle:
                     ret,img = self.__cap.read()
 
                 self.__tracker.doTracking(img,debug=True,useColor=False)
+                
                 if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
                     break
 
@@ -69,8 +77,11 @@ class Battle:
             img[210:290 ,0:int(rpsRate['paper']*500)] = (255,0,0)
         cv2.imshow(name, img)
 
+
     def playOneMatch(self,timeCounter,oneshotFlags):# 1試合分の一連の処理を行います ----------------------------------------------------------------------------------------------------------------------------------
 
+        ##カメラからの映像を常に表示
+        cv2.imshow("Camera Stream",self.getCameraImage())
 
         if 0 < timeCounter <= 1:
             if(oneshotFlags[0]):
@@ -105,10 +116,6 @@ class Battle:
    
         if 7 < timeCounter:
             return 0
-
-
-
-
 
 
     def battleFlow(self,timeCounter,oneshotFlags): #試合の一連を処理します ------------------------------------------------------------------------------------------------------------------------------------------
