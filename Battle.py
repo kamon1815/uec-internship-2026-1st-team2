@@ -57,7 +57,7 @@ class Battle:
                 
                 if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
                     break
-
+ 
             #i回目の画像について判定する
             rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
             rsp_rates.append(rate)
