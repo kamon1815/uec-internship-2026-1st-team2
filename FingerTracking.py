@@ -121,6 +121,17 @@ class Fingertracking():
 
             cv2.imshow("Hand Tracking", frame)
 
+    def drawLandmarks(self,frame):
+        if self.raw_results.hand_landmarks:
+            img = self.draw_landmarks_on_image(frame, self.raw_results)
+                #print(results.hand_landmarks)
+                # RGB -> BGR
+            img = cv2.cvtColor(
+                    img,
+                    cv2.COLOR_RGB2BGR
+                )
+
+        return img
 
     def getRawTrackingData(self):
         return self.raw_results
