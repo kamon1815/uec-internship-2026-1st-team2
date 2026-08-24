@@ -1,6 +1,8 @@
 import numpy as np
 import math
 import cv2
+from pathlib import Path
+import json
 
 import FingerTracking as fin
 
@@ -11,6 +13,13 @@ import FingerTracking as fin
 # gestureはAIがグーチョキパーを認識した場合、rock, scissor, paperを返します。認識しなかった場合にはNoneを返します。
 
 class JugdeHand():
+    def __init__(self):
+            BASE_DIR = Path(__file__).resolve().parent
+            json_path = BASE_DIR / 'data\\param.json'
+            with open(json_path, "r", encoding="utf-8") as f:
+                param = json.load(f)
+            self.__importance = param.get("web").get("importance")
+            self.__rps = param.get("web").get("rps")
     def __tangent_angle(self, u: np.ndarray, v: np.ndarray):
         #返り値は0~math.pi
         i = np.inner(u, v)
@@ -18,13 +27,20 @@ class JugdeHand():
         c = i / n
         return np.arccos(np.clip(c, -1.0, 1.0))
 
-    def __four_vector2curve(self, p, max_open=math.pi, min_close=0.5*math.pi):
+    def __four_vector2curve(self, p):
         #p：2次元ベクトルが4つ(掌のベクトル、各関節ごとに指先へ)
         #max_open, min_close: curveRateが1と0にする角度(関節間角度3つの配列を返す)
         #openが1, closeが0
         curveRate=[]
         
         for i in range(3):
+            if i == 1:
+                min_close = 0.1 * math.pi
+            elif i ==2:
+                min_close = 0.85 * math.pi
+            else:
+                min_close = 0.7 * math.pi
+            max_open = math.pi
             rad = self.__tangent_angle(-np.array(p[i]),p[i+1])
             openRate= (rad-min_close) / (max_open-min_close)
             curveRate.append(max(0, min(openRate, 1))) #0~1を超えないように
@@ -56,7 +72,7 @@ class JugdeHand():
             importance_sum = sum(sum(row) for row in importance[type])
             for i in range(5):
                     for j in range(3):
-                        hand_typeRate += abs(curve[i][j]-curveRates[i][j])* importance[type][i][j]/ importance_sum
+                        hand_typeRate += (abs(curve[i][j]-curveRates[i][j])/max(abs(curve[i][j]-0),abs(1-curve[i][j])))* importance[type][i][j]/ importance_sum
             rpsRate[type] = 1 - hand_typeRate
         return rpsRate
 
@@ -70,9 +86,9 @@ class JugdeHand():
         elif gesture_text == "Closed_Fist":
             gesture = 'rock'
         if data.getNormalizedPosition().get(0) is not None:
-            importance = {'rock': [[0.2,0,0],[0.5,1,1],[0.5,1,1],[0.5,1,1],[0.5,1,1]], 'paper': [[0.5,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]], 'scissor':[[0.5,0,0],[1,1,1],[1,1,1],[0.3,0.5,0.3],[0.3,0.5,0.3]]}
-            rps = {'rock': [[0.7,1,1],[0,0,0],[0,0,0],[0,0,0],[0,0,0]], 'paper': [[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]], 'scissor':[[0.5,0,0],[1,1,1],[0,0,0],[0,0,0],[0,0,0]]}
-            # return self.__judge_rpsRate(self._cal_curveRates(data), importance, rps), gesture
+
+            if self.__importance is not None and self.__rps is not None:
+                return self.__judge_rpsRate(self._cal_curveRates(data), self.__importance, self.__rps), gesture
             return self.__judge_rpsRate(self._cal_curveRates(data)), gesture
         else:
             return  {'rock': None, 'paper': None, 'scissor': None}, gesture
