@@ -120,23 +120,28 @@ class Battle:
             if(oneshotFlags[3]):
                 print("けん")
                 oneshotFlags[3] = False
-        if 2.85 <= timeCounter <= 3.5:
+        if 2.90 <= timeCounter <= 3.5:
 
             if(oneshotFlags[4]):
+                start_time = time.time()
+
                 print("ぽん")
                 #ここで骨格認識と判定
                 if self.captureMode == 0:# 2枚での増分による判定
-                    rpsrates,gestures = self.computeRPS(40,2,200)
+                    rpsrates,gestures = self.computeRPS(10,2,200)
 
                 if self.captureMode == 1:# 10枚での統計的判定
                     rpsrates,gestures = self.computeRPS(10,10,200 / 10)
-
+                end_time = time.time()
                 print(rpsrates)
+                print(gestures)
+                print("処理時間" + str(end_time - start_time))
 
                 #デバッグ用改造済みshowRpsRate
                 for i in range(len(rpsrates)):
                     self.showRpsRate(rpsrates[i],str(i))
                 oneshotFlags[4] = False
+
 
    
         if 7 < timeCounter:
