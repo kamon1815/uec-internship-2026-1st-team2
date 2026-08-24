@@ -50,12 +50,8 @@ class Battle:
         rsp_gestures = []
         for i in range(amount):
             for trial in range(maxtrial): #2回目の画像取得。失敗ならmaxtrial回まで再試行。
-                if self.cameraMode == 0:
-                    img,defimg = self.__infinicam.get_frame()
-                    img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
 
-                if self.cameraMode == 1:
-                    ret,img = self.__cap.read()
+                img = self.getCameraImage()
 
                 self.__tracker.doTracking(img,debug=True,useColor=False)
                 
