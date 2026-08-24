@@ -4,10 +4,11 @@ import cv2
 
 import FingerTracking as fin
 
-#  rsp_rate = jugde.finPos2rpsRate(finger)
-#  戻り値は辞書型です。数値はそれぞれ0~1です。ex) {'rock': 0.5, 'paper': 0.5, 'scissor': 0.5}
+#  rsp_rate, gesture = jugde.finPos2rpsRate(finger)
+#  rsp_rateの戻り値は辞書型です。数値はそれぞれ0~1です。ex) {'rock': 0.5, 'paper': 0.5, 'scissor': 0.5}
 #  座標が取得できない場合は{'rock': None, 'paper': None, 'scissor': None}を返します。
 #  jugde.showRpsRate(rsp_rate)で各確率のguiを表示します。
+# gestureはAIがグーチョキパーを認識した場合、rock, scissor, paperを返します。認識しなかった場合にはNoneを返します。
 
 class JugdeHand():
     def __tangent_angle(self, u: np.ndarray, v: np.ndarray):
@@ -36,7 +37,7 @@ class JugdeHand():
             q.append(np.array(p[i+1]) - np.array(p[i]))
         return q
 
-    def __cal_curveRates(self, data):
+    def _cal_curveRates(self, data):
         curveRates=[]
         fingers_posNum = [[0,1,2,3,4],[0,5,6,7,8],[0,9,10,11,12],[0,13,14,15,16],[0,17,18,19,20]]
         for i in range(5):
@@ -60,13 +61,21 @@ class JugdeHand():
         return rpsRate
 
     def finPos2rpsRate(self, data):
+        gesture_text = data.getGesture()
+        gesture = None
+        if gesture_text == "Open_Palm":
+            gesture = 'paper'
+        elif gesture_text == "Victory":
+            gesture ='scissor'
+        elif gesture_text == "Closed_Fist":
+            gesture = 'rock'
         if data.getNormalizedPosition().get(0) is not None:
-            # importance = {'rock': [[0.2,0,0],[0.5,1,1],[0.5,1,1],[0.5,1,1],[0.5,1,1]], 'paper': [[0.5,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]], 'scissor':[[0.5,0,0],[1,1,1],[1,1,1],[0.3,0.5,0.3],[0.3,0.5,0.3]]}
-            # rps = {'rock': [[0.5,1,1],[0,0,0],[0,0,0],[0,0,0],[0,0,0]], 'paper': [[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]], 'scissor':[[0.5,0,0],[1,1,1],[0,0,0],[0,0,0],[0,0,0]]}
-            # return self.__judge_rpsRate(self.__cal_curveRates(data), importance, rps)
-            return self.__judge_rpsRate(self.__cal_curveRates(data))
+            importance = {'rock': [[0.2,0,0],[0.5,1,1],[0.5,1,1],[0.5,1,1],[0.5,1,1]], 'paper': [[0.5,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]], 'scissor':[[0.5,0,0],[1,1,1],[1,1,1],[0.3,0.5,0.3],[0.3,0.5,0.3]]}
+            rps = {'rock': [[0.7,1,1],[0,0,0],[0,0,0],[0,0,0],[0,0,0]], 'paper': [[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]], 'scissor':[[0.5,0,0],[1,1,1],[0,0,0],[0,0,0],[0,0,0]]}
+            # return self.__judge_rpsRate(self._cal_curveRates(data), importance, rps), gesture
+            return self.__judge_rpsRate(self._cal_curveRates(data)), gesture
         else:
-            return  {'rock': None, 'paper': None, 'scissor': None}
+            return  {'rock': None, 'paper': None, 'scissor': None}, gesture
 
     def showRpsRate(self, rpsRate):
         img = np.zeros((300,500,3), dtype='uint8')
@@ -91,8 +100,9 @@ if __name__ == '__main__':
         ret,img = cap.read()
         finger.doTracking(img,debug=True,useColor=True)
 
-        rsp_rate = jugde.finPos2rpsRate(finger)
-        jugde.showRpsRate(jugde.finPos2rpsRate(finger))
+        rsp_rate, gesture = jugde.finPos2rpsRate(finger)
+        jugde.showRpsRate(rsp_rate)
+        print(gesture)
 
         if cv2.waitKey(1) == 27:
             break
