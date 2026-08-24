@@ -18,7 +18,9 @@ class Battle:
 
     cameraMode = 1 # 0: inficicamを使用する 1: webカメラを使用する
 
+
     def __init__(self):
+
         if self.cameraMode == 0:
             self.__infinicam = InfinicamManager()
             self.__infinicam.connect(500,1246,1024,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
@@ -30,7 +32,9 @@ class Battle:
 
         self.__judge = JugdeHand()
 
+
     def getCameraImage(self):
+
         if self.cameraMode == 0:
             img,defimg = self.__infinicam.get_frame()
             img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
@@ -38,6 +42,7 @@ class Battle:
         if self.cameraMode == 1:
             ret,img = self.__cap.read()
         return img
+
 
     def computeRPS(self, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
@@ -67,6 +72,7 @@ class Battle:
 
 
     def showRpsRate(self, rpsRate, name):
+
         img = np.zeros((300,500,3), dtype='uint8')
         img[:] = (255,255,255)
         if rpsRate['rock'] is not None: 
@@ -120,13 +126,13 @@ class Battle:
 
     def battleFlow(self,timeCounter,oneshotFlags): #試合の一連を処理します ------------------------------------------------------------------------------------------------------------------------------------------
 
-
         if self.playOneMatch(timeCounter,oneshotFlags) == 0: #試合が終わったらそれを呼び出し元に通知
             return 0
         
 
 
     def close(self):
+
         if self.cameraMode == 0:
             self.__infinicam.close()
 
@@ -140,6 +146,7 @@ class Battle:
 
 
 if __name__ == "__main__":
+
     battle = Battle()
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
@@ -163,4 +170,5 @@ if __name__ == "__main__":
         end_time = time.time()
         deltaTime = end_time - start_time
         counter += deltaTime
+
     battle.close()
