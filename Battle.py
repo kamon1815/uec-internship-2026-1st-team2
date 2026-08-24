@@ -142,7 +142,7 @@ class Battle:
                     self.showRpsRate(rpsrates[i],str(i))
                 oneshotFlags[4] = False
 
-
+    
    
         if 7 < timeCounter:
             return 0
