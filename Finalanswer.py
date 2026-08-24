@@ -13,7 +13,6 @@ class finalanswer():
         self.history_limit = history_len
         self.current_rates = {'rock': 0.0, 'scissor': 0.0, 'paper': 0.0}
         self.last_rates ={'rock': 0.0, 'scissor': 0.0, 'paper': 0.0} 
-        self.hold_counter = 0
         #それぞれのしきい値の設定
         self.thresholds = {
             'rock': rock_th,
