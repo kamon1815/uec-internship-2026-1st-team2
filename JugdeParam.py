@@ -32,7 +32,7 @@ while True:
     if val == "False" or infinicam_on == False:
         ret,img = cap.read()
         finger.doTracking(img,debug=True,useColor=True)
-        camara ='web'
+        camera ='web'
     else:
         img,defimg = infinicam.get_frame()
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
@@ -49,7 +49,7 @@ while True:
     else:
         gesture = None
 
-    data = [[camara, gesture]]
+    data = [[camera, gesture]]
     
     if finger.getNormalizedPosition().get(0) is not None:
         curveRates = jugde._cal_curveRates(finger)
@@ -97,8 +97,8 @@ for camera, data in csv_data.items():
                     # print(np.max(np.array(trans_values[i],dtype=float)),np.min(np.array(trans_values[i],dtype=float)),)
                 if i%3 == 2:
                     # print()
-                    param[camara]["rps"][hand_type].append(rps_finger)
-                    param[camara]["importance"][hand_type].append(imp_finger)
+                    param[camera]["rps"][hand_type].append(rps_finger)
+                    param[camera]["importance"][hand_type].append(imp_finger)
                     rps_finger, imp_finger = [],[]
 
 with open(json_path, 'w') as f:
