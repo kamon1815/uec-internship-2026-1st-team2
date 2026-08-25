@@ -39,7 +39,7 @@ class Battle:
         self.__tracker = Fingertracking()
 
         self.__judge = JugdeHand()
-        self.__finalans = finalanswer(10,10,0.5,0.5,0.5)
+        self.__finalans = finalanswer(10,0.5,0.5,0.5)
 
 
     def getCameraImage(self):
@@ -80,7 +80,7 @@ class Battle:
 
 
 
-    def computeRPS(self, counter, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
+    def computeRPS_Lite(self, counter, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
         rsp_rates = []
         rsp_gestures = []
@@ -160,16 +160,16 @@ class Battle:
                 print("ぽん")
                 #ここで骨格認識と判定
                 if self.captureMode == 0:# 2枚での増分による判定
-                    rpsrates,gestures = self.computeRPS(10,2,200)
+                    rpsrates,gestures = self.computeRPS(maxtrial=10,amount=2,duration=200)
 
                 if self.captureMode == 1:# 10枚での統計的判定
-                    rpsrates,gestures = self.computeRPS(5,10,200 / 10)
+                    rpsrates,gestures = self.computeRPS(maxtrial=5,amount=10,duration=200 / 10)
                 end_time = time.time()
                 print(rpsrates)
                 print(gestures)
                 print("処理時間" + str(end_time - start_time))
 
-                print(self.__finalans.get_finalanswer(gestures))
+                print(self.__finalans.get_finalanswer(gestures,None))
 
                 #デバッグ用改造済みshowRpsRate
                 for i in range(len(rpsrates)):
