@@ -156,7 +156,7 @@ class Battle:
             if(self.oneshotFlags[3]):
                 print("けん")
                 self.oneshotFlags[3] = False
-        if 2.90 <= timeCounter:
+        if 2.85 <= timeCounter:
             start_time = 0
             if self.shotCounter < amount:
                 start_time = time.time()
@@ -174,7 +174,6 @@ class Battle:
                     self.prev_shot_delta_time = 0
 
 
-
             if self.shotCounter >= amount:#骨格推定と判定
                 if self.oneshotFlags[5]:
                     end_time = time.time()
@@ -189,7 +188,10 @@ class Battle:
                     print(self.__finalans.get_finalanswer(self.rsp_gestures,None))
                     self.oneshotFlags[5] = False
                     
-
+        if 3.0 <= timeCounter:
+            if(self.oneshotFlags[4]):
+                print("ぽん")
+                self.oneshotFlags[4] = False
    
         if 7 < timeCounter:
             return 0
