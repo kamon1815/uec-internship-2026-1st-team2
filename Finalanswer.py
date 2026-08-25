@@ -8,7 +8,7 @@ from collections import Counter
 
 class finalanswer():
     #データの受け皿を作成
-    def __init__(self,history_len, rock_th, scissor_th, paper_th, Confidencethreshold):
+    def __init__(self,history_len, rock_th=0.5, scissor_th=0.5, paper_th=0.5, Confidencethreshold=0.5, truncation_inc=0.5, truncation_th=0.5, rateofchange_inc=0.5, rateofchange_th=0.5, appearance_inc=0.5, appearance_th=0.5):
         self.rate_history =  []
         #履歴リストの最大容量（上限）
         self.history_limit = history_len
@@ -21,6 +21,13 @@ class finalanswer():
             'paper': paper_th
         }
         self.Confidencethreshold = Confidencethreshold
+        #シグモイド関数用のそれぞれの傾きと基準値(この順番)
+        self.truncation = truncation_inc
+        self.b_truncation = truncation_th
+        self.rateofchange = rateofchange_inc
+        self.b_rateofchange = rateofchange_th
+        self.appearance_inclination = appearance_inc
+        self.b_appearance = appearance_th
     #初期設定とデータの読み取り
     def  settings_reading(self, rps_rate):
         #過去データの退避
@@ -55,7 +62,7 @@ class finalanswer():
     def Rateofchange(self):
         #手の候補のストック
         Rateofchange_candidate = []
-         #手の形の増減を率それぞれ順番にチェック
+         #手の形の増減率それぞれ順番にチェック
         for hand in ["rock", "scissor", "paper"]:
             change_val = self.current_rates[hand] - self.last_rates[hand]
             #変化率が正の値の場合
@@ -88,7 +95,18 @@ class finalanswer():
         if most_common_hand is None:
             return None, 0.0
         appearance_rate = most_common_count / self.history_limit
-        return most_common_hand, appearance_rate
+        #自信率比較を行うためのシグモイド関数の計算
+        if appearance_rate <= 0.0:
+            appearance_sigmoidrate = 0.0
+            return most_common_hand, appearance_sigmoidrate
+        else:
+           appearance_sigmoidrate = 1 / (1 + math.exp(-self.appearance_inclination * (appearance_rate - self.b_appearance)))
+           return  most_common_hand, appearance_sigmoidrate
+
+
+
+
+    #最終決定判断
     def get_finalanswer(self, gesture, undetected):
         # 3つの関数を呼び出す
         hand1, conf1 = self.Truncation()
