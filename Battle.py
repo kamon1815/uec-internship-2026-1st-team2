@@ -41,7 +41,7 @@ class Battle:
         self.__tracker = Fingertracking()
 
         self.__judge = JugdeHand()
-        self.__finalans = finalanswer(10,0.5,0.5,0.5)
+        self.__finalans = finalanswer(10,0.5,0.5,0.5,0.5)
 
 
     def getCameraImage(self):
@@ -74,7 +74,7 @@ class Battle:
             rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
             rsp_rates.append(rate)
             rsp_gestures.append(gesture)
-            self.__finalans.settings_reading(rate,gesture,0.5)
+            self.__finalans.settings_reading(rate)
             if i < amount-1:
                 time.sleep(duration /1000)
 
@@ -97,7 +97,7 @@ class Battle:
         rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
         self.rsp_rates.append(rate)
         self.rsp_gestures.append(gesture)
-        self.__finalans.settings_reading(rate,gesture,0.5)
+        self.__finalans.settings_reading(rate)
         return True
 
 
@@ -115,14 +115,14 @@ class Battle:
         cv2.imshow(name, img)
 
     
-    def showResultImg(ret):
+    def showResultImg(self,ret):
         match ret:
-            case 0:
-                print("グー")
-            case 1:
-                print("チョキ")
-            case 2:
-                print("パー")     
+            case "rock":
+                print("相手：パー")
+            case "scissor":
+                print("相手：グー")
+            case "paper":
+                print("相手：チョキ")     
 
 
     
@@ -130,9 +130,11 @@ class Battle:
     shotCounter_timeout = 0#撮影失敗枚数
     prev_shot_delta_time = 0#前回撮影時のcountを記録
 
+    
+
     def playOneMatch(self,timeCounter):# 1試合分の一連の処理を行います ----------------------------------------------------------------------------------------------------------------------------------
 
-        duration = 20 #撮影間隔
+        duration = 10 #撮影間隔
         amount = 7 #撮影枚数
         timeout = 10
 
@@ -182,10 +184,13 @@ class Battle:
                     print("処理時間" + str(end_time - start_time))
                     print("撮影成功枚数" + str(self.shotCounter - self.shotCounter_timeout))
                     #デバッグ用改造済みshowRpsRate
-                    for i in range(len(self.rsp_rates)):
-                        self.showRpsRate(self.rsp_rates[i],str(i))
+                    #for i in range(len(self.rsp_rates)):
+                    #    self.showRpsRate(self.rsp_rates[i],str(i))
                     
-                    print(self.__finalans.get_finalanswer(self.rsp_gestures,None))
+                    #print(self.__finalans.get_finalanswer(self.rsp_gestures,None))
+
+                    self.showResultImg(self.__finalans.get_finalanswer(self.rsp_gestures,None))
+
                     self.oneshotFlags[5] = False
                     
         if 3.0 <= timeCounter:
@@ -226,7 +231,7 @@ class Battle:
 
 if __name__ == "__main__":
 
-    battle = Battle(0,1)
+    battle = Battle(0,0)
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
      #一度だけ実行用のフラグ
