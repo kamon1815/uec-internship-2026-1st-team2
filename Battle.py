@@ -19,7 +19,9 @@ import time
 class Battle:
 
     battle_window = "BattleWindow"
-
+    oneshotFlags = [True] * 6   
+    rsp_gestures = []
+    rsp_rates = []
 
     def __init__(self,cameramode = 0, capturemode = 0):
         self.cameraMode = cameramode# 0: inficicamを使用する 1: webカメラを使用する
@@ -27,7 +29,7 @@ class Battle:
 
         if self.cameraMode == 0:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(500,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(988,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
 
         if self.cameraMode == 1:
             self.__cap = cv2.VideoCapture(0)
@@ -72,7 +74,7 @@ class Battle:
             rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
             rsp_rates.append(rate)
             rsp_gestures.append(gesture)
-            self.__finalans.settings_reading(rate,gesture)
+            self.__finalans.settings_reading(rate,gesture,0.5)
             if i < amount-1:
                 time.sleep(duration /1000)
 
@@ -80,30 +82,24 @@ class Battle:
 
 
 
-    def computeRPS_Lite(self, counter, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
-        rsp_rates = []
-        rsp_gestures = []
-        for i in range(amount):
-            for trial in range(maxtrial): #i回目の画像取得。失敗ならmaxtrial回まで再試行。
+    def computeRPS_Lite(self): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
-                img = self.getCameraImage()
 
-                self.__tracker.doTracking(img,debug=True,useColor=False)
+        img = self.getCameraImage()
+
+        self.__tracker.doTracking(img,debug=True,useColor=False)
                 
-                if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
-                    #print(trial)#試行回数を表示 (デバッグ)
-                    break
- 
-            #i回目の画像について判定する
-            rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
-            rsp_rates.append(rate)
-            rsp_gestures.append(gesture)
-            self.__finalans.settings_reading(rate,gesture)
-            if i < amount-1:
-                time.sleep(duration /1000)
+        if self.__tracker.getNormalizedPosition().get(0) == None: #トラッキング成功時はそれを判定へ回す
+            return False
 
-        return rsp_rates,rsp_gestures
+
+        rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
+        self.rsp_rates.append(rate)
+        self.rsp_gestures.append(gesture)
+        self.__finalans.settings_reading(rate,gesture,0.5)
+        return True
+
 
 
     def showRpsRate(self, rpsRate, name):
@@ -129,65 +125,88 @@ class Battle:
                 print("パー")     
 
 
+    
+    shotCounter = 0#撮影枚数カウンタ
+    shotCounter_timeout = 0#撮影失敗枚数
+    prev_shot_delta_time = 0#前回撮影時のcountを記録
 
-    def playOneMatch(self,timeCounter,oneshotFlags):# 1試合分の一連の処理を行います ----------------------------------------------------------------------------------------------------------------------------------
+    def playOneMatch(self,timeCounter):# 1試合分の一連の処理を行います ----------------------------------------------------------------------------------------------------------------------------------
+
+        duration = 20 #撮影間隔
+        amount = 7 #撮影枚数
+        timeout = 10
 
         ##カメラからの映像を常に表示
         cv2.imshow(self.battle_window,self.getCameraImage())
 
         if 0 < timeCounter <= 1:
-            if(oneshotFlags[0]):
+            if(self.oneshotFlags[0]):
                 print("最初は")
-                oneshotFlags[0] = False
+                self.oneshotFlags[0] = False
         if 1 < timeCounter <= 2:
-            if(oneshotFlags[1]):
+            if(self.oneshotFlags[1]):
                 print("グー")
-                oneshotFlags[1] = False
+                self.oneshotFlags[1] = False
 
         if 2 < timeCounter <= 2.5:
-            if(oneshotFlags[2]):
+            if(self.oneshotFlags[2]):
                 print("じゃん")
-                oneshotFlags[2] = False
+                self.oneshotFlags[2] = False
         if 2.5 <= timeCounter <= 2.9:
-            if(oneshotFlags[3]):
+            if(self.oneshotFlags[3]):
                 print("けん")
-                oneshotFlags[3] = False
-        if 2.90 <= timeCounter <= 3.5:
-
-            if(oneshotFlags[4]):
+                self.oneshotFlags[3] = False
+        if 2.90 <= timeCounter:
+            start_time = 0
+            if self.shotCounter < amount:
                 start_time = time.time()
+                if self.prev_shot_delta_time == 0:
+                    if self.computeRPS_Lite():
+                        self.shotCounter += 1
 
-                print("ぽん")
-                #ここで骨格認識と判定
-                if self.captureMode == 0:# 2枚での増分による判定
-                    rpsrates,gestures = self.computeRPS(maxtrial=10,amount=2,duration=200)
+                        self.prev_shot_delta_time = counter
+                    elif counter - self.prev_shot_delta_time > timeout / 1000:
+                        self.shotCounter += 1
+                        self.shotCounter_timeout += 1
 
-                if self.captureMode == 1:# 10枚での統計的判定
-                    rpsrates,gestures = self.computeRPS(maxtrial=5,amount=10,duration=200 / 10)
-                end_time = time.time()
-                print(rpsrates)
-                print(gestures)
-                print("処理時間" + str(end_time - start_time))
 
-                print(self.__finalans.get_finalanswer(gestures,None))
+                elif counter - self.prev_shot_delta_time  > duration /1000 :
+                    self.prev_shot_delta_time = 0
 
-                #デバッグ用改造済みshowRpsRate
-                for i in range(len(rpsrates)):
-                    self.showRpsRate(rpsrates[i],str(i))
-                oneshotFlags[4] = False
 
+
+            if self.shotCounter >= amount:#骨格推定と判定
+                if self.oneshotFlags[5]:
+                    end_time = time.time()
+                    print(self.rsp_rates)
+                    print(self.rsp_gestures)
+                    print("処理時間" + str(end_time - start_time))
+                    print("撮影成功枚数" + str(self.shotCounter - self.shotCounter_timeout))
+                    #デバッグ用改造済みshowRpsRate
+                    for i in range(len(self.rsp_rates)):
+                        self.showRpsRate(self.rsp_rates[i],str(i))
+                    
+                    print(self.__finalans.get_finalanswer(self.rsp_gestures,None))
+                    self.oneshotFlags[5] = False
+                    
 
    
         if 7 < timeCounter:
             return 0
 
 
-    def battleFlow(self,timeCounter,oneshotFlags): #試合の一連を処理します ------------------------------------------------------------------------------------------------------------------------------------------
+    def battleFlow(self,timeCounter): #試合の一連を処理します ------------------------------------------------------------------------------------------------------------------------------------------
 
-        if self.playOneMatch(timeCounter,oneshotFlags) == 0: #試合が終わったらそれを呼び出し元に通知
+        if self.playOneMatch(timeCounter) == 0: #試合が終わったらそれを呼び出し元に通知
             return 0
         
-
+    def reset(self):
+        self.oneshotFlags = [True] * len(self.oneshotFlags) 
+        self.prev_shot_delta_time = 0
+        self.shotCounter = 0
+        self.shotCounter_timeout = 0
+        self.rsp_rates = []
+        self.rsp_gestures = []
 
     def close(self):
 
@@ -205,10 +224,10 @@ class Battle:
 
 if __name__ == "__main__":
 
-    battle = Battle(1,1)
+    battle = Battle(0,1)
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
-    oneshotFlags = [True] * 6 #一度だけ実行用のフラグ
+     #一度だけ実行用のフラグ
 
     
 
@@ -217,9 +236,9 @@ if __name__ == "__main__":
         key = cv2.waitKey(1)
 
         #試合を行う
-        ret = battle.battleFlow(counter,oneshotFlags)
+        ret = battle.battleFlow(counter)
         if ret == 0:#試合終了でカウンターをリセットし、再戦
-            oneshotFlags = [True] * 6
+            battle.reset()
             counter = 0
 
 
