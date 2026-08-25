@@ -1,6 +1,6 @@
 #試合関係を処理します
-#コードの上の方にある,cameraMode = 1 を cameraMode = 0 にするとinfinicamで動作確認ができます
-#コードの上の方にある,captureMode = 0 を cameraMode = 1 にすると10枚の連番での検証ができます
+#main内のBattle(1,0) の左側の引数を0にするとinfinicamで動作確認ができます
+#main内のBattle(1,0) の左側の引数を1にすると10枚の連番での検証ができます
 #playOneMatch内のcomputeRPS(40,2,100)の引数は、撮影失敗時に取り直す回数、最終的に出力する枚数、その撮影間隔となっています。
 #この場合は、100ミリ秒間隔で2回の判定を行い、撮影失敗時はそれぞれ最大40回まで再撮影します
 #戻り値は   確率(辞書型),ジェスチャー(文字列)の順です。詳しくはJugdeHandをご確認ください。
@@ -10,31 +10,36 @@
 from FingerTracking import Fingertracking
 from InfinicamManeger import InfinicamManager
 from JugdeHand import JugdeHand
+from Finalanswer import finalanswer
 import numpy as np
 import cv2
 import time
 
+
 class Battle:
 
-    cameraMode = 1 # 0: inficicamを使用する 1: webカメラを使用する
-    captureMode = 0 # 0: 2つの画像で判定(確率の増分での判断に使用)  1: 10枚の画像で判定(統計的判断に使用)
     battle_window = "BattleWindow"
 
 
     def __init__(self,cameramode = 0, capturemode = 0):
-        self.cameraMode = cameramode
-        self.captureMode = capturemode
+        self.cameraMode = cameramode# 0: inficicamを使用する 1: webカメラを使用する
+        self.captureMode = capturemode# 0: 2つの画像で判定(確率の増分での判断に使用)  1: 10枚の画像で判定(統計的判断に使用)
 
         if self.cameraMode == 0:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(500,1246,1024,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(500,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
 
         if self.cameraMode == 1:
             self.__cap = cv2.VideoCapture(0)
+            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
+            print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.__tracker = Fingertracking()
 
         self.__judge = JugdeHand()
+        self.__finalans = finalanswer(10,0.5,0.5,0.5)
 
 
     def getCameraImage(self):
@@ -67,7 +72,34 @@ class Battle:
             rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
             rsp_rates.append(rate)
             rsp_gestures.append(gesture)
+            self.__finalans.settings_reading(rate,gesture)
+            if i < amount-1:
+                time.sleep(duration /1000)
 
+        return rsp_rates,rsp_gestures
+
+
+
+    def computeRPS_Lite(self, counter, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
+
+        rsp_rates = []
+        rsp_gestures = []
+        for i in range(amount):
+            for trial in range(maxtrial): #i回目の画像取得。失敗ならmaxtrial回まで再試行。
+
+                img = self.getCameraImage()
+
+                self.__tracker.doTracking(img,debug=True,useColor=False)
+                
+                if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
+                    #print(trial)#試行回数を表示 (デバッグ)
+                    break
+ 
+            #i回目の画像について判定する
+            rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
+            rsp_rates.append(rate)
+            rsp_gestures.append(gesture)
+            self.__finalans.settings_reading(rate,gesture)
             if i < amount-1:
                 time.sleep(duration /1000)
 
@@ -128,14 +160,16 @@ class Battle:
                 print("ぽん")
                 #ここで骨格認識と判定
                 if self.captureMode == 0:# 2枚での増分による判定
-                    rpsrates,gestures = self.computeRPS(10,2,200)
+                    rpsrates,gestures = self.computeRPS(maxtrial=10,amount=2,duration=200)
 
                 if self.captureMode == 1:# 10枚での統計的判定
-                    rpsrates,gestures = self.computeRPS(10,10,200 / 10)
+                    rpsrates,gestures = self.computeRPS(maxtrial=5,amount=10,duration=200 / 10)
                 end_time = time.time()
                 print(rpsrates)
                 print(gestures)
                 print("処理時間" + str(end_time - start_time))
+
+                print(self.__finalans.get_finalanswer(gestures,None))
 
                 #デバッグ用改造済みshowRpsRate
                 for i in range(len(rpsrates)):
@@ -171,10 +205,12 @@ class Battle:
 
 if __name__ == "__main__":
 
-    battle = Battle(1,0)
+    battle = Battle(1,1)
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
     oneshotFlags = [True] * 6 #一度だけ実行用のフラグ
+
+    
 
     while True:
         start_time = time.time()
