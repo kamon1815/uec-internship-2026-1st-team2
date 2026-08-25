@@ -29,7 +29,7 @@ class Battle:
 
         if self.cameraMode == 0:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(500,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(988,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
 
         if self.cameraMode == 1:
             self.__cap = cv2.VideoCapture(0)
@@ -74,7 +74,7 @@ class Battle:
             rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
             rsp_rates.append(rate)
             rsp_gestures.append(gesture)
-            self.__finalans.settings_reading(rate,gesture)
+            self.__finalans.settings_reading(rate,gesture,0.5)
             if i < amount-1:
                 time.sleep(duration /1000)
 
@@ -97,7 +97,7 @@ class Battle:
         rate,gesture = self.__judge.finPos2rpsRate(self.__tracker)
         self.rsp_rates.append(rate)
         self.rsp_gestures.append(gesture)
-        self.__finalans.settings_reading(rate,gesture)
+        self.__finalans.settings_reading(rate,gesture,0.5)
         return True
 
 
@@ -132,9 +132,9 @@ class Battle:
 
     def playOneMatch(self,timeCounter):# 1試合分の一連の処理を行います ----------------------------------------------------------------------------------------------------------------------------------
 
-        duration = 1 #撮影間隔
-        amount = 10 #撮影枚数
-        timeout = 20
+        duration = 20 #撮影間隔
+        amount = 7 #撮影枚数
+        timeout = 10
 
         ##カメラからの映像を常に表示
         cv2.imshow(self.battle_window,self.getCameraImage())
@@ -173,9 +173,7 @@ class Battle:
                 elif counter - self.prev_shot_delta_time  > duration /1000 :
                     self.prev_shot_delta_time = 0
 
-            if(self.oneshotFlags[4]):
-                print("ぽん")
-                self.oneshotFlags[4] = False
+
 
             if self.shotCounter >= amount:#骨格推定と判定
                 if self.oneshotFlags[5]:
@@ -226,7 +224,7 @@ class Battle:
 
 if __name__ == "__main__":
 
-    battle = Battle(1,1)
+    battle = Battle(0,1)
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
      #一度だけ実行用のフラグ
