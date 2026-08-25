@@ -27,26 +27,28 @@ class Battle:
         self.cameraMode = cameramode# 0: inficicamを使用する 1: webカメラを使用する
         self.captureMode = capturemode# 0: 2つの画像で判定(確率の増分での判断に使用)  1: 10枚の画像で判定(統計的判断に使用)
 
-        if self.cameraMode == 0:
+        try:
             self.__infinicam = InfinicamManager()
             self.__infinicam.connect(988,640,525,2.0,20) #fps , 解像度縦横, コントラスト, 明るさ
+        except ValueError as e:
+            pass
 
-        if self.cameraMode == 1:
-            self.__cap = cv2.VideoCapture(0)
-            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
-            print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.__cap = cv2.VideoCapture(0)
+        self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
+        print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.__tracker = Fingertracking()
 
         self.__judge = JugdeHand()
-        self.__finalans = finalanswer(10,0.5,0.5,0.3,0.7)
+        self.__finalans = finalanswer(10)
 
 
     def getCameraImage(self):
 
         if self.cameraMode == 0:
+
             img,defimg = self.__infinicam.get_frame()
             img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
 
