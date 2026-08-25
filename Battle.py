@@ -27,33 +27,41 @@ class Battle:
         self.cameraMode = cameramode# 0: inficicamを使用する 1: webカメラを使用する
         self.captureMode = capturemode# 0: 2つの画像で判定(確率の増分での判断に使用)  1: 10枚の画像で判定(統計的判断に使用)
 
-        if self.cameraMode == 0:
+        try:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(988,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(988,640,525,2.0,20) #fps , 解像度縦横, コントラスト, 明るさ
+        except:
+            self.__infinicam = None
+            pass
 
-        if self.cameraMode == 1:
-            self.__cap = cv2.VideoCapture(0)
-            self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-            self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
-            print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-            print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.__cap = cv2.VideoCapture(0)
+        self.__cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
+        print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
         self.__tracker = Fingertracking()
 
         self.__judge = JugdeHand()
-        self.__finalans = finalanswer(10,0.5,0.5,0.3,0.7)
+        self.__finalans = finalanswer(10)
 
 
     def getCameraImage(self):
 
         if self.cameraMode == 0:
-            img,defimg = self.__infinicam.get_frame()
-            img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            if self.__infinicam != None: 
+                img,defimg = self.__infinicam.get_frame()
+                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            else: 
+                self.cameraMode = 1
 
         if self.cameraMode == 1:
             ret,img = self.__cap.read()
         return img
 
+
+    def changeCamera(self,c):#c = 0でinfinicam、c = 1 でwebカメラ
+        self.cameraMode = c
 
     def computeRPS(self, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
@@ -136,7 +144,7 @@ class Battle:
 
         duration = 10 #撮影間隔
         amount = 7 #撮影枚数
-        timeout = 10
+        timeout = 20
 
         ##カメラからの映像を常に表示
         cv2.imshow(self.battle_window,self.getCameraImage())
@@ -217,8 +225,7 @@ class Battle:
         self.rsp_gestures = []
 
     def close(self):
-
-        if self.cameraMode == 0:
+        if self.__infinicam != None:
             self.__infinicam.close()
 
 
@@ -233,6 +240,7 @@ class Battle:
 if __name__ == "__main__":
 
     battle = Battle(0,0)
+
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
      #一度だけ実行用のフラグ
@@ -244,7 +252,9 @@ if __name__ == "__main__":
         key = cv2.waitKey(1)
 
         #試合を行う
+        
         ret = battle.battleFlow(counter)
+
         if ret == 0:#試合終了でカウンターをリセットし、再戦
             battle.reset()
             counter = 0
