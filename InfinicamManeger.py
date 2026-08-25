@@ -17,6 +17,10 @@ class InfinicamManager:
         self.array = None
         self.decoded_deta = None
  #接続と初期設定
+    def configurateCameraImage(self,contrast, light):
+         self.alpha = contrast
+         self.beta = light
+    
     def connect(self, fps, width, height, alpha,beta):
         self.width = width
         self.height = height

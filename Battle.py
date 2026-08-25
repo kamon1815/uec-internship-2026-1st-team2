@@ -41,7 +41,7 @@ class Battle:
         self.__tracker = Fingertracking()
 
         self.__judge = JugdeHand()
-        self.__finalans = finalanswer(10,0.5,0.5,0.5,0.5)
+        self.__finalans = finalanswer(10,0.5,0.5,0.3,0.7)
 
 
     def getCameraImage(self):
@@ -152,6 +152,7 @@ class Battle:
 
         if 2 < timeCounter <= 2.5:
             if(self.oneshotFlags[2]):
+
                 print("じゃん")
                 self.oneshotFlags[2] = False
         if 2.5 <= timeCounter <= 2.9:
