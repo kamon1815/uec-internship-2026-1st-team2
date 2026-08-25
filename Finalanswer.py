@@ -8,7 +8,7 @@ from collections import Counter
 
 class finalanswer():
     #データの受け皿を作成
-    def __init__(self,history_len, rock_th=0.5, scissor_th=0.5, paper_th=0.5, Confidencethreshold=0.5, truncation_inc=0.5, truncation_th=0.5, rateofchange_inc=0.5, rateofchange_th=0.5, appearance_inc=0.5, appearance_th=0.5):
+    def __init__(self,history_len, rock_th=0.5, scissor_th=0.5, paper_th=0.5, Confidencethreshold=0.5, truncation_inc=0.5, rateofchange_inc=0.5, rateofchange_th=0.5, appearance_inc=0.5, appearance_th=0.5):
         self.rate_history =  []
         #履歴リストの最大容量（上限）
         self.history_limit = history_len
@@ -22,9 +22,8 @@ class finalanswer():
         }
         self.Confidencethreshold = Confidencethreshold
         #シグモイド関数用のそれぞれの傾きと基準値(この順番)
-        self.truncation = truncation_inc
-        self.b_truncation = truncation_th
-        self.rateofchange = rateofchange_inc
+        self.truncation_inclination = truncation_inc
+        self.rateofchange_inclination = rateofchange_inc
         self.b_rateofchange = rateofchange_th
         self.appearance_inclination = appearance_inc
         self.b_appearance = appearance_th
@@ -57,7 +56,24 @@ class finalanswer():
         else:
         #合格したものから順位ずけをさらに行って候補を一つに絞る
             best_canndidate = max(Truncation_candidate, key=lambda x: x[1] )
-        return best_canndidate[0], best_canndidate[1]
+         #自信率比較を行うためのシグモイド関数の計算
+            if best_canndidate[1] <= 0.0:
+                    truncation_sigmoidrate = 0.0
+                    return best_canndidate[0], truncation_sigmoidrate
+            else:
+                if best_canndidate[0] == 'rock':
+                   self.thresholds.get("rock") 
+                   truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("rock") )))
+                if best_canndidate[0] == 'paper':
+                    self.thresholds.get("paper") 
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("paper") )))
+                if best_canndidate[0] == 'scissor':
+                    self.thresholds.get('scissor') 
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("scissor") )))
+                return  best_canndidate[0], truncation_sigmoidrate
+                                
+            
+       
     #増減率比較
     def Rateofchange(self):
         #手の候補のストック
@@ -73,6 +89,22 @@ class finalanswer():
         else:
          #合格したものから順位ずけをさらに行って候補を一つに絞る
             best_canndidate = max(Rateofchange_candidate, key=lambda x: x[1] )
+         #自信率比較を行うためのシグモイド関数の計算
+            if best_canndidate[1] <= 0.0:
+                truncation_sigmoidrate = 0.0
+                return best_canndidate[0], truncation_sigmoidrate
+            else:
+                if best_canndidate[0] == 'rock':
+                    self.thresholds.get("rock") 
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("rock") )))
+                if best_canndidate[0] == 'paper':
+                    self.thresholds.get("paper") 
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("paper") )))
+                if best_canndidate[0] == 'scissor':
+                    self.thresholds.get('scissor') 
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("scissor") )))
+                return  best_canndidate[0], truncation_sigmoidrate
+                                        
         return best_canndidate[0], best_canndidate[1]
     #統計比較
     def statisticalcomparison(self):
