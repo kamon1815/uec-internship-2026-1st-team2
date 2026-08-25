@@ -198,7 +198,7 @@ class Battle:
                 print("ぽん")
                 self.oneshotFlags[4] = False
    
-        if 10 < timeCounter:
+        if 7 < timeCounter:
             return 0
 
 
@@ -231,7 +231,7 @@ class Battle:
 
 if __name__ == "__main__":
 
-    battle = Battle(1,0)
+    battle = Battle(0,0)
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
      #一度だけ実行用のフラグ
