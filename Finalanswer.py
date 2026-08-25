@@ -8,7 +8,7 @@ from collections import Counter
 
 class finalanswer():
     #データの受け皿を作成
-    def __init__(self,history_len, rock_th, scissor_th, paper_th):
+    def __init__(self,history_len, rock_th, scissor_th, paper_th, Confidencethreshold):
         self.rate_history =  []
         #履歴リストの最大容量（上限）
         self.history_limit = history_len
@@ -20,9 +20,9 @@ class finalanswer():
             'scissor': scissor_th,
             'paper': paper_th
         }
-        self.Confidencethreshold = None
+        self.Confidencethreshold = Confidencethreshold
     #初期設定とデータの読み取り
-    def  settings_reading(self, rps_rate, gesture, Confidencethreshold):
+    def  settings_reading(self, rps_rate):
         #過去データの退避
         self.last_rates = self.current_rates.copy()
         #None→0.0にする
@@ -30,7 +30,6 @@ class finalanswer():
         self.current_rates['paper'] = rps_rate.get('paper') if rps_rate.get('paper') is not None else 0.0
         self.current_rates['scissor'] = rps_rate.get('scissor') if rps_rate.get('scissor') is not None else 0.0
         self.rate_history.append(self.current_rates.copy())
-        self.Confidencethreshold = Confidencethreshold
         if len(self.rate_history) > self.history_limit:
             self.rate_history.pop(0)
 #それぞれの判定
