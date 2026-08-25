@@ -22,24 +22,27 @@ class InfinicamManager:
          self.beta = light
     
     def connect(self, fps, width, height, alpha,beta):
-        self.width = width
-        self.height = height
-        self.alpha = alpha
-        self.beta = beta
-        self.cam = CameraFactory().create()
-        self.decoder = self.cam.decoder()
-        self.reso = self.cam.resolution()
-        self.cam.setFramerateShutter(fps, fps)
-        print(f"{fps}に設定しました")
-        self.GPUStatus = self.decoder.getAvailableGPUProcess()
-        if self.GPUStatus == True:
-            param = GPUSetup(self.reso.width, self.reso.height)
-            self.decoder.setupGPUDecode(param)
-            print("Decode using a GPU device")
-        elif self.GPUStatus == False:
-            print("Since GPU is not available, decode using CPU") 
-        print(f"{(width,height)}に設定しました") 
-        print(f"{(alpha,beta)}に設定しました") 
+        try:
+            self.width = width
+            self.height = height
+            self.alpha = alpha
+            self.beta = beta
+            self.cam = CameraFactory().create()
+            self.decoder = self.cam.decoder()
+            self.reso = self.cam.resolution()
+            self.cam.setFramerateShutter(fps, fps)
+            print(f"{fps}に設定しました")
+            self.GPUStatus = self.decoder.getAvailableGPUProcess()
+            if self.GPUStatus == True:
+                param = GPUSetup(self.reso.width, self.reso.height)
+                self.decoder.setupGPUDecode(param)
+                print("Decode using a GPU device")
+            elif self.GPUStatus == False:
+                print("Since GPU is not available, decode using CPU") 
+            print(f"{(width,height)}に設定しました") 
+            print(f"{(alpha,beta)}に設定しました") 
+        except:
+             raise
 
 #画像データの仲介,取得
     def get_frame(self):
