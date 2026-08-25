@@ -29,7 +29,7 @@ class Battle:
 
         if self.cameraMode == 0:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(988,640,525,2.0,1) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(988,640,525,2.0,20) #fps , 解像度縦横, コントラスト, 明るさ
 
         if self.cameraMode == 1:
             self.__cap = cv2.VideoCapture(0)
@@ -136,7 +136,7 @@ class Battle:
 
         duration = 10 #撮影間隔
         amount = 7 #撮影枚数
-        timeout = 10
+        timeout = 20
 
         ##カメラからの映像を常に表示
         cv2.imshow(self.battle_window,self.getCameraImage())
@@ -233,6 +233,7 @@ class Battle:
 if __name__ == "__main__":
 
     battle = Battle(0,0)
+
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
      #一度だけ実行用のフラグ
@@ -244,7 +245,9 @@ if __name__ == "__main__":
         key = cv2.waitKey(1)
 
         #試合を行う
+        
         ret = battle.battleFlow(counter)
+
         if ret == 0:#試合終了でカウンターをリセットし、再戦
             battle.reset()
             counter = 0
