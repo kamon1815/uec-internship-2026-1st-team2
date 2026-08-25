@@ -20,9 +20,9 @@ class finalanswer():
             'scissor': scissor_th,
             'paper': paper_th
         }
-
+        self.Confidencethreshold = None
     #初期設定とデータの読み取り
-    def  settings_reading(self, rps_rate, gesture):
+    def  settings_reading(self, rps_rate, gesture, Confidencethreshold):
         #過去データの退避
         self.last_rates = self.current_rates.copy()
         #None→0.0にする
@@ -30,7 +30,7 @@ class finalanswer():
         self.current_rates['paper'] = rps_rate.get('paper') if rps_rate.get('paper') is not None else 0.0
         self.current_rates['scissor'] = rps_rate.get('scissor') if rps_rate.get('scissor') is not None else 0.0
         self.rate_history.append(self.current_rates.copy())
-
+        self.Confidencethreshold = Confidencethreshold
         if len(self.rate_history) > self.history_limit:
             self.rate_history.pop(0)
 #それぞれの判定
@@ -115,7 +115,25 @@ class finalanswer():
 
                 if len(confidencerate) > 0:
                     bestconfidencerate_canndidate = max(confidencerate, key=lambda x: x[1] )
-                    return bestconfidencerate_canndidate[0] 
+                    if bestconfidencerate_canndidate[1] > self.Confidencethreshold:
+                        return bestconfidencerate_canndidate[0] 
+        #多数決と自信率比較ともにできなかった場合            
+                    else:
+                       if gesture in ["rock", "scissor", "paper"]:
+                           return gesture 
+                       else:
+                           return undetected            
+
+                else:
+                    if gesture in ["rock", "scissor", "paper"]:
+                        return gesture 
+                    else:
+                        return undetected         
+        else:
+            if gesture in ["rock", "scissor", "paper"]:
+                return gesture
+            else:
+                return undetected            
                 
           #最終決定判断改良
 
