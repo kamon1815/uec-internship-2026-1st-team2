@@ -30,7 +30,8 @@ class Battle:
         try:
             self.__infinicam = InfinicamManager()
             self.__infinicam.connect(988,640,525,2.0,20) #fps , 解像度縦横, コントラスト, 明るさ
-        except ValueError as e:
+        except:
+            self.__infinicam = None
             pass
 
         self.__cap = cv2.VideoCapture(0)
@@ -48,14 +49,19 @@ class Battle:
     def getCameraImage(self):
 
         if self.cameraMode == 0:
-
-            img,defimg = self.__infinicam.get_frame()
-            img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            if self.__infinicam != None: 
+                img,defimg = self.__infinicam.get_frame()
+                img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            else: 
+                self.cameraMode = 1
 
         if self.cameraMode == 1:
             ret,img = self.__cap.read()
         return img
 
+
+    def changeCamera(self,c):#c = 0でinfinicam、c = 1 でwebカメラ
+        self.cameraMode = c
 
     def computeRPS(self, maxtrial = 40,amount = 2, duration = 100 ): # 画像取得からパーセンテージの計算までを行います   maxtrialは撮影失敗時に取り直す回数、 amountは最終的に出力する枚数、durationは撮影間隔
 
@@ -219,8 +225,7 @@ class Battle:
         self.rsp_gestures = []
 
     def close(self):
-
-        if self.cameraMode == 0:
+        if self.__infinicam != None:
             self.__infinicam.close()
 
 
