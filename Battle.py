@@ -112,7 +112,7 @@ class Battle:
             self.__finalans.settings_reading(rate)
             if i < amount-1:
                 time.sleep(duration /1000)
-
+            self.fingertracker.doTracking(img,debug = True)
         return rsp_rates,rsp_gestures
 
 

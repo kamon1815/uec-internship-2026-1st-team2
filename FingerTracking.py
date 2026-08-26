@@ -2,6 +2,7 @@ import mediapipe as mp
 import numpy as np
 import cv2
 from  InfinicamManeger import InfinicamManager
+from SettingGUI import SettingGUI
 
 # 使い方の例
 # finger = Fingertracking()
@@ -89,14 +90,14 @@ class Fingertracking():
         self.__contrast = contrast
         self.__light = brightness
 
-    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET,useColor=False):
+    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_BONE,useColor=False):
 
         #エッジ抽出
         edge = cv2.blur(img,(5,5))
         edge = cv2.Canny(edge,30,80)
         edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
         #元画像とエッジをブレンド
-        mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
+        mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.0, gamma=0)
 
 
         frame = cv2.convertScaleAbs(mixed, alpha=self.__contrast, beta=self.__light)
@@ -220,14 +221,15 @@ class Fingertracking():
 #デバッグ用
 if __name__ == "__main__":
     finger = Fingertracking(2.4,7)
-    #cap = cv2.VideoCapture(0)
-    infinicam = InfinicamManager()
-    infinicam.connect(800)
+    cap = cv2.VideoCapture(0)
+    settingGUI  = SettingGUI()
+    #infinicam = InfinicamManager()
+    #infinicam.connect(800)
     filter = cv2.COLORMAP_JET
+
+    state = 1
     while True:
-        #ret,img = cap.read()
-        img = infinicam.get_frame()
-        img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+
         key = cv2.waitKey(1)
         if key ==  ord('q'):
             filter = cv2.COLORMAP_BONE
@@ -240,14 +242,28 @@ if __name__ == "__main__":
         if key ==  ord('t'):
             filter = cv2.COLORMAP_HOT
 
+        if key ==  ord('a') and state == 2:
+            state = 1
+            settingGUI = SettingGUI()
 
-        finger.doTracking(img,debug = True,colorFillter=filter,useColor=False)
-        print(finger.getNormalizedPosition().get(0) )
+        if state == 1:
+            config,pressed = settingGUI.update()
+            if pressed:
+                state = 2
+                cap = cv2.VideoCapture(0)
+            
+        if state == 2:
+            ret,img = cap.read()
+            #img = infinicam.get_frame()
+            #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            finger.configurateContrastAndBrightness(config["contrast"],config["brightness"])
+            finger.doTracking(img,debug = True)
+            print(finger.getNormalizedPosition().get(0) )
 
         if key == 27:
            break
 
-    infinicam.close()
+    #infinicam.close()
 
 
 
