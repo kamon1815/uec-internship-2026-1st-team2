@@ -12,16 +12,28 @@ class SettingGUI:
     enhanceFilter = [False]
     autocontrast = [False]
 
+    camera_prev_buttonstate = True
+
     def update(self):
         frame = np.zeros((800, 700, 3), np.uint8)
         frame[:] = (49, 52, 49)
 
-        if cvui.button(frame, 550, 720, "設定完了"):
+        if cvui.button(frame, 550, 720, "設定完了"):#設定完了ボタンが押されたらウィンドウを閉じる
             self.is_acceptbutton_pressed = True
             self.close()
             return
         else:
             self.is_acceptbutton_pressed = False   
+
+        if cvui.button(frame, 300, 720, "カメラ切り替え") and self.camera_prev_buttonstate:
+            if self.config["camera"] == 1:
+                self.config["camera"] = 0
+            else:
+                self.config["camera"] = 1
+            print(self.config["camera"])
+            self.camera_prev_buttonstate = False
+        else:
+            self.camera_prev_buttonstate = True
 
         #コントラストのトラックバー
         cvui.text(frame, 10, 540, 'コントラスト')
@@ -36,11 +48,13 @@ class SettingGUI:
 
         self.config["contrast"] = self.contrast[0]
         self.config["brightness"] = self.brightness[0]
-   
+        self.config["auto"] = self.autocontrast[0]
         self.preview(frame)
 
         cvui.update()
         cvui.imshow(self.windowname, frame)
+
+
 
         return self.config
 
@@ -52,14 +66,14 @@ class SettingGUI:
 
 
 
-        # スケーリング係数の計算
+        # コントラスト自動調整
         if self.autocontrast[0]:
             self.config["contrast"] = 255 / (max_val - min_val)    
-
+        #プレビュー用の変換処理
         img = cv2.convertScaleAbs(img,alpha= self.config["contrast"],beta = self.config["brightness"])
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-
+        #強調表示がオンの時はフィルタをかける
         if self.enhanceFilter[0]:
             gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
             mappedimg = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
@@ -83,11 +97,6 @@ class SettingGUI:
         return img
 
 
-    #カメラ切り替えの機能 ---------------------------------------------------------------------------------------------
-    def changeCamera(self,c):#c = 0でinfinicam、c = 1 でwebカメラ
-        self.cameraMode = c
-
-
     def nothing(self,x):
         pass        
 
@@ -103,7 +112,7 @@ class SettingGUI:
     def __init__(self,):
         cvui.init(self.windowname)
 
-        self.config = {"camera": 1, "contrast":1, "brightness":1}
+        self.config = {"camera": 0, "contrast":1, "brightness":1,"auto":0}
 
                 #infinicamとwebカメラをセットアップ
         try:
@@ -129,7 +138,7 @@ if __name__ == "__main__":
             start_time = time.time()
             
 
-            settingGUI.update()
+            print(settingGUI.update())
             key = cv2.waitKey(1)
             if settingGUI.is_acceptbutton_pressed or key == 27:
                break
