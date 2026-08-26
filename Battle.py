@@ -216,9 +216,9 @@ class Battle:
                         self.showRpsRate(self.rsp_rates[i],str(i))
                     
                     #print(self.__finalans.get_finalanswer(self.rsp_gestures,None))
-
-                    self.showResultImg(self.__finalans.get_finalanswer(self.rsp_gestures,None))#最終結果を結果表示部分に渡す
-
+                    ret_ges,ret_way = self.__finalans.get_finalanswer(self.rsp_gestures,None)
+                    self.showResultImg(ret_ges)#最終結果を結果表示部分に渡す
+                    print(ret_way)
                     self.oneshotFlags[5] = False
                     
         if 3.0 <= timeCounter:
