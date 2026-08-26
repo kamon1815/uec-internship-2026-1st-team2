@@ -9,7 +9,8 @@ class SettingGUI:
     is_acceptbutton_pressed = False
     contrast = [1.0]
     brightness = [1.0]
-    
+    enhanceFilter = [False]
+    autocontrast = [False]
 
     def update(self):
         frame = np.zeros((800, 700, 3), np.uint8)
@@ -24,10 +25,14 @@ class SettingGUI:
 
         #コントラストのトラックバー
         cvui.text(frame, 10, 540, 'コントラスト')
-        cvui.trackbar(frame, 10, 580, 600, self.contrast,0.0, 2.0)
+        cvui.trackbar(frame, 10, 560, 600, self.contrast,0.0, 2.0)
         #明るさのトラックバー
         cvui.text(frame, 10, 620, '明るさ')
-        cvui.trackbar(frame, 10, 660, 600, self.brightness,-30.0, 30)
+        cvui.trackbar(frame, 10, 640, 600, self.brightness,-30.0, 30)
+        #強調表示の切り替え
+
+        cvui.checkbox(frame,10,10,'コントラスト強調', self.enhanceFilter)
+        cvui.checkbox(frame,300,540,'コントラスト自動調整', self.autocontrast)
 
         self.config["contrast"] = self.contrast[0]
         self.config["brightness"] = self.brightness[0]
@@ -45,13 +50,22 @@ class SettingGUI:
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         min_val, max_val, _, _ = cv2.minMaxLoc(gray)
 
+
+
         # スケーリング係数の計算
-        #self.config["contrast"] = 255 / (max_val - min_val)    
-        print(self.config["contrast"])
+        if self.autocontrast[0]:
+            self.config["contrast"] = 255 / (max_val - min_val)    
+
         img = cv2.convertScaleAbs(img,alpha= self.config["contrast"],beta = self.config["brightness"])
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
-        cvui.image(frame, 10, 10,img)
+
+        if self.enhanceFilter[0]:
+            gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+            mappedimg = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+            img = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
+        
+        cvui.image(frame, 10, 40,img)
 
     #現在のカメラ設定に応じてカメラから画像を取得する -------------------------------------------------------------------
     def getCameraImage(self):
@@ -117,7 +131,7 @@ if __name__ == "__main__":
 
             settingGUI.update()
             key = cv2.waitKey(1)
-            if settingGUI.is_acceptbutton_pressed:
+            if settingGUI.is_acceptbutton_pressed or key == 27:
                break
     settingGUI.close()
 
