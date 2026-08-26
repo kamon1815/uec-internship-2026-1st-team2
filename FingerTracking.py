@@ -85,7 +85,11 @@ class Fingertracking():
 
         return annotated_image
 
-    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_BONE,useColor=False):
+    def configurateContrastAndBrightness(self,contrast,brightness):
+        self.__contrast = contrast
+        self.__light = brightness
+
+    def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET,useColor=False):
 
         #エッジ抽出
         edge = cv2.blur(img,(5,5))
@@ -93,6 +97,8 @@ class Fingertracking():
         edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
         #元画像とエッジをブレンド
         mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
+
+
         frame = cv2.convertScaleAbs(mixed, alpha=self.__contrast, beta=self.__light)
         if useColor == False:
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
