@@ -8,7 +8,7 @@ from collections import Counter
 
 class finalanswer():
     #データの受け皿を作成
-    def __init__(self,history_len, rock_th=0.5, scissor_th=0.5, paper_th=0.5, Confidencethreshold=0.5, truncation_inc=0.5, rateofchange_inc=0.5, rateofchange_th=0.5, appearance_inc=0.5, appearance_th=0.5):
+    def __init__(self,history_len, rock_th=0.90, scissor_th=0.50, paper_th=0.90, Confidencethreshold=0.55, truncation_inc=4.0, rateofchange_inc=1.5, rateofchange_th=0.03, appearance_inc=0.6, appearance_th=0.50):
         self.rate_history =  []
         #履歴リストの最大容量（上限）
         self.history_limit = history_len
@@ -20,6 +20,7 @@ class finalanswer():
             'scissor': scissor_th,
             'paper': paper_th
         }
+        #自信率の足切りライン
         self.Confidencethreshold = Confidencethreshold
         #シグモイド関数用のそれぞれの傾き(_inc)と基準値(_th)
         self.truncation_inclination = truncation_inc
@@ -37,7 +38,7 @@ class finalanswer():
         self.current_rates['scissor'] = rps_rate.get('scissor') if rps_rate.get('scissor') is not None else 0.0
         self.rate_history.append(self.current_rates.copy())
         if len(self.rate_history) > self.history_limit:
-            self.rate_history.pop(0)
+            self.rate_history.pop(0)  
 #それぞれの判定
     #数値切り判定
     def  Truncation(self): 
@@ -77,7 +78,22 @@ class finalanswer():
         Rateofchange_candidate = []
          #手の形の増減率それぞれ順番にチェック
         for hand in ["rock", "scissor", "paper"]:
-            change_val = self.current_rates[hand] - self.last_rates[hand]
+            #最大9回の増減率を入れる箱を作成
+            change_valallbox = []
+            #i-1回目の値-i回目の値を計算し作成した箱に入れる
+            for i in range(len(self.rate_history) - 1):    
+                change_val = self.rate_history[i + 1][hand] - self.rate_history[i][hand]
+                change_valallbox.append(change_val)
+            #正の値しか入れない箱を作成    
+            plus_only_box = []
+            #正の値を作成した箱に入れる
+            for val in change_valallbox:
+                if val > 0.0:
+                    plus_only_box.append(val)
+            #正の値のみを計算に入れて平均をとった増減率を作成
+            change_val = 0.0
+            if len(plus_only_box) > 0:
+                change_val = sum(plus_only_box) / len(plus_only_box)
             #変化率が正の値の場合
             if change_val >= 0.0:
                 Rateofchange_candidate.append((hand,change_val))
@@ -106,14 +122,15 @@ class finalanswer():
                 past_hands.append(None)
             else:
                 past_hands.append(top_hand)
-        counts = Counter(past_hands)  
+        # 履歴を逆順（最新が先頭）にして集計する
+        counts = Counter(reversed(past_hands))  
             
         #集計して上位1件を取り出し[0]、その外枠を剥ぎ取って、手(文字)と回数(数字)に仕分け
         most_common_hand, most_common_count = counts.most_common(1)[0]
         #もっとも映っている結果はなにかそもそもあるのか
         if most_common_hand is None:
             return None, 0.0
-        appearance_rate = most_common_count / self.history_limit
+        appearance_rate = most_common_count / len(self.rate_history)
         #自信率比較を行うためのシグモイド関数の計算
         if appearance_rate <= 0.0:
             appearance_sigmoidrate = 0.0
@@ -131,6 +148,9 @@ class finalanswer():
         hand1, conf1 = self.Truncation()
         hand2, conf2 = self.Rateofchange()
         hand3, conf3 = self.statisticalcomparison()
+        print("Truncation     :", hand1, conf1)
+        print("Rateofchange   :", hand2, conf2)
+        print("Statistical    :", hand3, conf3)
         #多数決判定
         votes = []
         if hand1 is not None: votes.append(hand1)
