@@ -86,9 +86,7 @@ class Battle:
     #カメラ切り替えの機能 ---------------------------------------------------------------------------------------------
     def changeCamera(self,config):#c = 0でinfinicam、c = 1 でwebカメラ
         self.cameraMode = config.get("camera")
-        #カメラ切り替えの機能 ---------------------------------------------------------------------------------------------
-    def changeCamera(self,config):#c = 0でinfinicam、c = 1 でwebカメラ
-        self.cameraMode = config["camera"]
+
 
 
     #骨格推定を実行 (旧版)  ------------------------------------------------------------------------------------------
@@ -201,7 +199,7 @@ class Battle:
                 print("けん")
                 self.oneshotFlags[3] = False
 
-        if 2.85 <= timeCounter:
+        if 2.68 <= timeCounter:
 
             start_time = 0#処理時間計測用
 
@@ -300,6 +298,10 @@ if __name__ == "__main__":
         if ret == 0:#試合終了でカウンターをリセットし、再戦
             battle.reset()
             counter = 0
+            start_time = 0
+            end_time = 0
+            deltaTime = 0
+            continue
 
         #カメラ切り替え
         if key == ord('q'):
