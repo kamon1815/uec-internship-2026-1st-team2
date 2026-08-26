@@ -8,7 +8,7 @@ from collections import Counter
 
 class finalanswer():
     #データの受け皿を作成
-    def __init__(self,history_len, rock_th=0.5, scissor_th=0.5, paper_th=0.5, Confidencethreshold=0.5, truncation_inc=0.5, truncation_th=0.5, rateofchange_inc=0.5, rateofchange_th=0.5, appearance_inc=0.5, appearance_th=0.5):
+    def __init__(self,history_len, rock_th=0.5, scissor_th=0.5, paper_th=0.5, Confidencethreshold=0.5, truncation_inc=0.5, rateofchange_inc=0.5, rateofchange_th=0.5, appearance_inc=0.5, appearance_th=0.5):
         self.rate_history =  []
         #履歴リストの最大容量（上限）
         self.history_limit = history_len
@@ -21,10 +21,9 @@ class finalanswer():
             'paper': paper_th
         }
         self.Confidencethreshold = Confidencethreshold
-        #シグモイド関数用のそれぞれの傾きと基準値(この順番)
-        self.truncation = truncation_inc
-        self.b_truncation = truncation_th
-        self.rateofchange = rateofchange_inc
+        #シグモイド関数用のそれぞれの傾き(_inc)と基準値(_th)
+        self.truncation_inclination = truncation_inc
+        self.ratechange_inclination = rateofchange_inc
         self.b_rateofchange = rateofchange_th
         self.appearance_inclination = appearance_inc
         self.b_appearance = appearance_th
@@ -57,7 +56,21 @@ class finalanswer():
         else:
         #合格したものから順位ずけをさらに行って候補を一つに絞る
             best_canndidate = max(Truncation_candidate, key=lambda x: x[1] )
-        return best_canndidate[0], best_canndidate[1]
+         #自信率比較を行うためのシグモイド関数の計算
+            if best_canndidate[1] <= 0.0:
+                    truncation_sigmoidrate = 0.0
+                    return best_canndidate[0], truncation_sigmoidrate
+            else:
+                if best_canndidate[0] == 'rock':
+                   truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("rock") )))
+                if best_canndidate[0] == 'paper':
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("paper") )))
+                if best_canndidate[0] == 'scissor': 
+                    truncation_sigmoidrate = 1 / (1 + math.exp(-self.truncation_inclination * (best_canndidate[1] -self.thresholds.get("scissor") )))
+                return  best_canndidate[0], truncation_sigmoidrate
+                                
+            
+       
     #増減率比較
     def Rateofchange(self):
         #手の候補のストック
@@ -73,7 +86,13 @@ class finalanswer():
         else:
          #合格したものから順位ずけをさらに行って候補を一つに絞る
             best_canndidate = max(Rateofchange_candidate, key=lambda x: x[1] )
-        return best_canndidate[0], best_canndidate[1]
+         #自信率比較を行うためのシグモイド関数の計算
+            if best_canndidate[1] <= 0.0:
+                ratechange_sigmoidrate = 0.0
+                return best_canndidate[0], ratechange_sigmoidrate
+            else:
+                ratechange_sigmoidrate = 1 / (1 + math.exp(-self.ratechange_inclination * (best_canndidate[1] - self.b_rateofchange)))
+                return  best_canndidate[0], ratechange_sigmoidrate
     #統計比較
     def statisticalcomparison(self):
         if len(self.rate_history) == 0:
@@ -122,8 +141,8 @@ class finalanswer():
             votes_counts = Counter(votes)
             Majorityrule_hand, Majorityrule_count = votes_counts.most_common(1)[0]
             if Majorityrule_count >= 2:
-                return Majorityrule_hand
-        #多数決ができない場合の自信率比較
+                return Majorityrule_hand,"多数決判定"
+        #多数決ができない場合のシグモイド関数を用いた自信率比較
             elif   Majorityrule_count <= 1: 
                 confidencerate = []
                 if hand1 is not None: confidencerate.append((hand1, conf1))
@@ -133,24 +152,24 @@ class finalanswer():
                 if len(confidencerate) > 0:
                     bestconfidencerate_canndidate = max(confidencerate, key=lambda x: x[1] )
                     if bestconfidencerate_canndidate[1] > self.Confidencethreshold:
-                        return bestconfidencerate_canndidate[0] 
-        #多数決と自信率比較ともにできなかった場合            
+                        return bestconfidencerate_canndidate[0], "自信率判定"
+        #多数決と自信率比較ともにできなかった場合のAI判定            
                     else:
                        if gesture in ["rock", "scissor", "paper"]:
-                           return gesture 
+                           return gesture, "AI判定"
                        else:
                            return undetected            
 
                 else:
                     if gesture in ["rock", "scissor", "paper"]:
-                        return gesture 
+                        return gesture, "AI判定" 
                     else:
                         return undetected         
         else:
             if gesture in ["rock", "scissor", "paper"]:
-                return gesture
+                return gesture, "AI判定"
             else:
-                return undetected            
+                return undetected,"未検出"           
                 
           #最終決定判断改良
 
