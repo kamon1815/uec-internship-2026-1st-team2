@@ -29,7 +29,7 @@ class Battle:
 
         try:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(988,640,525,2.0,20) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(988,640,525,2.0,10) #fps , 解像度縦横, コントラスト, 明るさ
         except:
             self.__infinicam = None
             pass
@@ -259,6 +259,10 @@ if __name__ == "__main__":
             battle.reset()
             counter = 0
 
+        if key == ord('q'):
+           battle.changeCamera(0)
+        if key == ord('w'):
+            battle.changeCamera(1)
 
         if key == 27:
            break
