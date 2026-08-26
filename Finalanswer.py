@@ -175,10 +175,10 @@ class finalanswer():
                         return bestconfidencerate_canndidate[0], "自信率判定"
         #多数決と自信率比較ともにできなかった場合のAI判定            
                     else:
-                        if gesture in ["rock", "scissor", "paper"]:
-                            return gesture, "AI判定"
-                        else:
-                            return undetected,"未検出"            
+                       if gesture in ["rock", "scissor", "paper"]:
+                           return gesture, "AI判定"
+                       else:
+                           return undetected,"未検出"            
 
                 else:
                     if gesture in ["rock", "scissor", "paper"]:

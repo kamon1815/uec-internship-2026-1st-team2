@@ -85,6 +85,10 @@ class Fingertracking():
 
         return annotated_image
 
+    def configurateContrastAndBrightness(self,contrast,brightness):
+        self.__contrast = contrast
+        self.__light = brightness
+
     def doTracking(self,img,debug = False,colorFillter = cv2.COLORMAP_JET,useColor=False):
 
         #エッジ抽出
@@ -93,19 +97,25 @@ class Fingertracking():
         edge = cv2.cvtColor(edge,cv2.COLOR_GRAY2BGR)
         #元画像とエッジをブレンド
         mixed = cv2.addWeighted(src1=img, alpha=1.0, src2=edge, beta=0.5, gamma=0)
+
+
         frame = cv2.convertScaleAbs(mixed, alpha=self.__contrast, beta=self.__light)
         if useColor == False:
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             mappedimg = cv2.applyColorMap(gray, colorFillter)
+            debugimg = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+            debugimg = cv2.cvtColor(debugimg, cv2.COLOR_BGR2RGB)
             frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
+            
         else: 
-            frame = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+            debugimg = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
 
         # mediapipe.Image に変換
         mp_image = mp.Image(
                 image_format=mp.ImageFormat.SRGB,
-                data=img
+                data=frame
            )
         # 手検出
         self.raw_results = self.recognizer.recognize(mp_image)
@@ -113,18 +123,19 @@ class Fingertracking():
         # 検出結果描画
         if debug:
             if self.raw_results.hand_landmarks:
-                frame = self.draw_landmarks_on_image(frame, self.raw_results)
+                debugimg = self.draw_landmarks_on_image(debugimg, self.raw_results)
                 #print(results.hand_landmarks)
                 # RGB -> BGR
-            frame = cv2.cvtColor(
-                    frame,
+            debugimg = cv2.cvtColor(
+                    debugimg,
                     cv2.COLOR_RGB2BGR
                 )
 
-            cv2.imshow("Hand Tracking", frame)
+            cv2.imshow("Hand Tracking", debugimg)
 
     def drawLandmarks(self,frame):
         if self.raw_results.hand_landmarks:
+            
             img = self.draw_landmarks_on_image(frame, self.raw_results)
                 #print(results.hand_landmarks)
                 # RGB -> BGR
@@ -202,6 +213,9 @@ class Fingertracking():
 
         self.recognizer = GestureRecognizer.create_from_options(options)
 
+    def setContrastAndLight(self,a,b):
+        self.__contrast = a
+        self.__light = b
 
 #デバッグ用
 if __name__ == "__main__":

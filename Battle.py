@@ -1,6 +1,9 @@
 #試合関係を処理します
-#main内のBattle(1,0) の左側の引数を0にするとinfinicamで動作確認ができます
-#main内のBattle(1,0) の左側の引数を1にすると10枚の連番での検証ができます
+#main内のBattle() の左側の引数を0にするとinfinicamで動作確認ができます
+#battle = Battle()でインスタンスを作った後、
+#config = {"camera":0,"contrast":1,"brightness":1,"auto":1} camera = 0でinfinicam、1でwebカメラを使用。auto = 1で自動コントラスト調整 0で無効
+#battle.changeCameraConfig(config)
+#とすることで設定を反映できます。
 #playOneMatch内のcomputeRPS(40,2,100)の引数は、撮影失敗時に取り直す回数、最終的に出力する枚数、その撮影間隔となっています。
 #この場合は、100ミリ秒間隔で2回の判定を行い、撮影失敗時はそれぞれ最大40回まで再撮影します
 #戻り値は   確率(辞書型),ジェスチャー(文字列)の順です。詳しくはJugdeHandをご確認ください。
@@ -27,6 +30,8 @@ class Battle:
         self.cameraMode = cameramode# 0: inficicamを使用する 1: webカメラを使用する
         self.captureMode = capturemode# 0: 2つの画像で判定(確率の増分での判断に使用)  1: 10枚の画像で判定(統計的判断に使用)
 
+        self.config = {"camera":0,"contrast":1,"brightness":1,"auto":1}
+
         #infinicamとwebカメラをセットアップ
         try:
             self.__infinicam = InfinicamManager()
@@ -41,14 +46,20 @@ class Battle:
         print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        self.__tracker = Fingertracking()
+        self.__tracker = Fingertracking(1.0,1.0)
 
         self.__judge = JugdeHand()
         self.__finalans = finalanswer(10)
 
 
-    def changeCameraConfig(self,config):
-        self.__infinicam.configurateCameraImage(config.get('contrast'),config.get('light'))#カメラの設定変更(仮)
+    def changeCameraConfig(self,config):#カメラの設定変更
+        self.config = config
+
+    def setCameraContrastAndBrightness(self):
+        if self.cameraMode == 0:#コントラストや明るさは別クラス担当なのでそっちへ投げる
+            self.__infinicam.configurateCameraImage(self.config["contrast"],self.config["brightness"])#カメラの設定変更(仮)
+        else:
+            self.__tracker.configurateContrastAndBrightness(self.config["contrast"],self.config["brightness"])
 
 
     #現在のカメラ設定に応じてカメラから画像を取得する -------------------------------------------------------------------
@@ -64,12 +75,18 @@ class Battle:
         if self.cameraMode == 1: # webカメラを使う場合
             ret,img = self.__cap.read()
 
+        if self.config.get("auto")== 1:#自動コントラスト調整がオンならその処理をする。
+            gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+            min_val, max_val, _, _ = cv2.minMaxLoc(gray)
+            contrast = 255 / (max_val - min_val)    
+            self.changeCameraConfig({"camera":self.cameraMode,"contrast":contrast, "brightness":self.config["brightness"],"auto":1})
         return img
 
 
     #カメラ切り替えの機能 ---------------------------------------------------------------------------------------------
-    def changeCamera(self,c):#c = 0でinfinicam、c = 1 でwebカメラ
-        self.cameraMode = c
+    def changeCamera(self,config):#c = 0でinfinicam、c = 1 でwebカメラ
+        self.cameraMode = config.get("camera")
+
 
 
     #骨格推定を実行 (旧版)  ------------------------------------------------------------------------------------------
@@ -82,7 +99,7 @@ class Battle:
 
                 img = self.getCameraImage()
 
-                self.__tracker.doTracking(img,debug=True,useColor=False)
+                self.__tracker.doTracking(img,debug=True,useColor=True)
                 
                 if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
                     #print(trial)#試行回数を表示 (デバッグ)
@@ -106,7 +123,7 @@ class Battle:
 
         img = self.getCameraImage()
         #骨格推定を実行
-        self.__tracker.doTracking(img,debug=True,useColor=False)
+        self.__tracker.doTracking(img,debug=True)
                 
         if self.__tracker.getNormalizedPosition().get(0) == None: #トラッキング成功時はそれを判定へ回す
             return False
@@ -161,6 +178,7 @@ class Battle:
 
         ##カメラからの映像を常に表示
         cv2.imshow(self.battle_window,self.getCameraImage())
+        self.setCameraContrastAndBrightness()
 
         if 0 < timeCounter <= 1:
             if(self.oneshotFlags[0]):#1度だけ実行
@@ -181,7 +199,7 @@ class Battle:
                 print("けん")
                 self.oneshotFlags[3] = False
 
-        if 2.85 <= timeCounter:
+        if 2.68 <= timeCounter:
 
             start_time = 0#処理時間計測用
 
@@ -233,6 +251,7 @@ class Battle:
     #試合の一連を処理します ------------------------------------------------------------------------------------------------------------------------------------------
     def battleFlow(self,timeCounter): 
 
+
         if self.playOneMatch(timeCounter) == 0: #試合が終わったらそれを呼び出し元に通知
             return 0
         return 1
@@ -263,7 +282,8 @@ class Battle:
 if __name__ == "__main__":
 
     battle = Battle(0,0)
-
+    config = {"camera":0,"contrast":1,"brightness":1,"auto":1}
+    battle.changeCameraConfig(config)
     deltaTime = 0.0
     counter = 0.0#経過時間のカウンター (試合開始時にリセット)
 
@@ -278,6 +298,10 @@ if __name__ == "__main__":
         if ret == 0:#試合終了でカウンターをリセットし、再戦
             battle.reset()
             counter = 0
+            start_time = 0
+            end_time = 0
+            deltaTime = 0
+            continue
 
         #カメラ切り替え
         if key == ord('q'):
