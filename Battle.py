@@ -41,14 +41,17 @@ class Battle:
         print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        self.__tracker = Fingertracking()
+        self.__tracker = Fingertracking(1.0,1.0)
 
         self.__judge = JugdeHand()
         self.__finalans = finalanswer(10)
 
 
     def changeCameraConfig(self,config):
-        self.__infinicam.configurateCameraImage(config.get('contrast'),config.get('light'))#カメラの設定変更(仮)
+        if self.captureMode == 0:
+            self.__infinicam.configurateCameraImage(config.get('contrast'),config.get('light'))#カメラの設定変更(仮)
+        else :
+            self.__tracker.setContrastAndLight(config.get('contrast'),config.get('light'))
 
 
     #現在のカメラ設定に応じてカメラから画像を取得する -------------------------------------------------------------------
@@ -82,7 +85,7 @@ class Battle:
 
                 img = self.getCameraImage()
 
-                self.__tracker.doTracking(img,debug=True,useColor=False)
+                self.__tracker.doTracking(img,debug=True,useColor=True)
                 
                 if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
                     #print(trial)#試行回数を表示 (デバッグ)
@@ -106,7 +109,7 @@ class Battle:
 
         img = self.getCameraImage()
         #骨格推定を実行
-        self.__tracker.doTracking(img,debug=True,useColor=False)
+        self.__tracker.doTracking(img,debug=True)
                 
         if self.__tracker.getNormalizedPosition().get(0) == None: #トラッキング成功時はそれを判定へ回す
             return False
