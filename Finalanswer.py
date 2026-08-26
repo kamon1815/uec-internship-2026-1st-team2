@@ -158,13 +158,13 @@ class finalanswer():
                        if gesture in ["rock", "scissor", "paper"]:
                            return gesture, "AI判定"
                        else:
-                           return undetected            
+                           return undetected,"未検出"            
 
                 else:
                     if gesture in ["rock", "scissor", "paper"]:
                         return gesture, "AI判定" 
                     else:
-                        return undetected         
+                        return undetected,"未検出"         
         else:
             if gesture in ["rock", "scissor", "paper"]:
                 return gesture, "AI判定"
