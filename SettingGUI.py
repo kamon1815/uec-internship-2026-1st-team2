@@ -1,3 +1,10 @@
+#設定GUIを担当します
+#settingGUI  = SettingGUI()
+#で作成し、settingGUI.update()を呼び出すことで設定画面を表示します。
+#settingGUI.update()の戻り値は{"camera":0, "contrast":1, "brightness":1, "auto":0},Falseのような辞書型と論理型です。
+# "camera"の値が0でinfinicam、1でwebカメラを使用、"auto"の値が1でコントラストの自動調整ON、決定ボタンが押されたときだけ、二つ目の戻り値がTrueになります
+# BattleクラスのchangeCameraConfigの引数に渡すことで設定を対戦画面へ引き継ぎます
+
 from InfinicamManeger import InfinicamManager
 import numpy as np
 import cv2
@@ -21,7 +28,7 @@ class SettingGUI:
         if cvui.button(frame, 550, 720, "設定完了"):#設定完了ボタンが押されたらウィンドウを閉じる
             self.is_acceptbutton_pressed = True
             self.close()
-            return
+            return self.config,self.is_acceptbutton_pressed
         else:
             self.is_acceptbutton_pressed = False   
 
@@ -30,7 +37,7 @@ class SettingGUI:
                 self.config["camera"] = 0
             else:
                 self.config["camera"] = 1
-            print(self.config["camera"])
+
             self.camera_prev_buttonstate = False
         else:
             self.camera_prev_buttonstate = True
@@ -56,7 +63,7 @@ class SettingGUI:
 
 
 
-        return self.config
+        return self.config,self.is_acceptbutton_pressed
 
 
     def preview(self,frame):
@@ -135,13 +142,14 @@ if __name__ == "__main__":
     settingGUI  = SettingGUI()
 
     while True:
-            start_time = time.time()
-            
 
-            print(settingGUI.update())
-            key = cv2.waitKey(1)
-            if settingGUI.is_acceptbutton_pressed or key == 27:
-               break
+            
+        config,pressed = settingGUI.update()
+        if pressed:
+            print(config)
+        key = cv2.waitKey(1)
+        if settingGUI.is_acceptbutton_pressed or key == 27:
+           break
     settingGUI.close()
 
 
