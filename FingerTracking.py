@@ -122,16 +122,16 @@ class Fingertracking():
         self.raw_results = self.recognizer.recognize(mp_image)
 
         # 検出結果描画
+        
+        if self.raw_results.hand_landmarks:
+            debugimg = self.draw_landmarks_on_image(debugimg, self.raw_results)
+            #print(results.hand_landmarks)
+            # RGB -> BGR
+        debugimg = cv2.cvtColor(
+                debugimg,
+                cv2.COLOR_RGB2BGR
+            )
         if debug:
-            if self.raw_results.hand_landmarks:
-                debugimg = self.draw_landmarks_on_image(debugimg, self.raw_results)
-                #print(results.hand_landmarks)
-                # RGB -> BGR
-            debugimg = cv2.cvtColor(
-                    debugimg,
-                    cv2.COLOR_RGB2BGR
-                )
-
             cv2.imshow("Hand Tracking", debugimg)
 
     def drawLandmarks(self,frame):
@@ -223,8 +223,8 @@ if __name__ == "__main__":
     finger = Fingertracking(2.4,7)
     cap = cv2.VideoCapture(0)
     settingGUI  = SettingGUI()
-    #infinicam = InfinicamManager()
-    #infinicam.connect(800)
+    infinicam = InfinicamManager()
+    infinicam.connect(988,640,525,2.0,1.0)
     filter = cv2.COLORMAP_JET
 
     state = 1
@@ -253,10 +253,11 @@ if __name__ == "__main__":
                 cap = cv2.VideoCapture(0)
             
         if state == 2:
-            ret,img = cap.read()
-            #img = infinicam.get_frame()
-            #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            #ret,img = cap.read()
+            img,defimg = infinicam.get_frame()
+            img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
             finger.configurateContrastAndBrightness(config["contrast"],config["brightness"])
+            
             finger.doTracking(img,debug = True)
             print(finger.getNormalizedPosition().get(0) )
 

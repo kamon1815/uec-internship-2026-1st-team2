@@ -22,17 +22,23 @@ class SettingGUI:
     camera_prev_buttonstate = True
 
     def update(self):
-        frame = np.zeros((800, 700, 3), np.uint8)
+
+        if cv2.getWindowProperty(self.windowname, cv2.WND_PROP_VISIBLE) < 1:
+            print("ウィンドウが閉じられたため、再生成してcvuiを再初期化します。")
+            #cv2.destroyWindow(self.windowname)  # 完全に破棄
+            cvui.init(self.windowname) 
+
+        frame = np.zeros((820, 700, 3), np.uint8)
         frame[:] = (49, 52, 49)
 
-        if cvui.button(frame, 550, 720, "設定完了"):#設定完了ボタンが押されたらウィンドウを閉じる
+        if cvui.button(frame, 550, 770, "設定完了"):#設定完了ボタンが押されたらウィンドウを閉じる
             self.is_acceptbutton_pressed = True
             self.close()
             return self.config,self.is_acceptbutton_pressed
         else:
             self.is_acceptbutton_pressed = False   
 
-        if cvui.button(frame, 300, 720, "カメラ切り替え") and self.camera_prev_buttonstate:
+        if cvui.button(frame, 300, 770, "カメラ切り替え") and self.camera_prev_buttonstate:
             if self.config["camera"] == 1:
                 self.config["camera"] = 0
             else:
@@ -43,15 +49,15 @@ class SettingGUI:
             self.camera_prev_buttonstate = True
 
         #コントラストのトラックバー
-        cvui.text(frame, 10, 540, 'コントラスト')
-        cvui.trackbar(frame, 10, 560, 600, self.contrast,0.0, 2.0)
+        cvui.text(frame, 10, 590, 'コントラスト')
+        cvui.trackbar(frame, 10, 610, 600, self.contrast,0.0, 2.0)
         #明るさのトラックバー
-        cvui.text(frame, 10, 620, '明るさ')
-        cvui.trackbar(frame, 10, 640, 600, self.brightness,-30.0, 30)
+        cvui.text(frame, 10, 670, '明るさ')
+        cvui.trackbar(frame, 10, 690, 600, self.brightness,-100, 100)
         #強調表示の切り替え
 
         cvui.checkbox(frame,10,10,'コントラスト強調', self.enhanceFilter)
-        cvui.checkbox(frame,300,540,'コントラスト自動調整', self.autocontrast)
+        cvui.checkbox(frame,300,590,'コントラスト自動調整', self.autocontrast)
 
         self.config["contrast"] = self.contrast[0]
         self.config["brightness"] = self.brightness[0]
@@ -75,9 +81,12 @@ class SettingGUI:
 
         # コントラスト自動調整
         if self.autocontrast[0]:
-            self.config["contrast"] = 255 / (max_val - min_val)    
+            self.config["contrast"] = (255 / (max_val - min_val))
+            self.contrast[0] = self.config["contrast"] 
+
         #プレビュー用の変換処理
         img = cv2.convertScaleAbs(img,alpha= self.config["contrast"],beta = self.config["brightness"])
+        #グレースケール化
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         #強調表示がオンの時はフィルタをかける
@@ -111,6 +120,7 @@ class SettingGUI:
         if self.__infinicam != None:
             self.__infinicam.close()
         self.__cap.release()
+        cv2.destroyAllWindows()
         cv2.waitKey(1)
 
 
