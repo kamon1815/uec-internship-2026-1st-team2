@@ -50,7 +50,11 @@ class finalanswer():
         self.rate_history.append(self.current_rates.copy())
         if len(self.rate_history) > self.history_limit:
             self.rate_history.pop(0)  
-        
+    def reset_history(self):
+        self.rate_history = []
+        self.current_rates = {'rock': 0.0,'scissor': 0.0,'paper': 0.0}
+        self.last_rates = {'rock': 0.0,'scissor': 0.0,'paper': 0.0}
+    
 
 #それぞれの判定
     #数値切り判定
