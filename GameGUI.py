@@ -52,7 +52,7 @@ class GameGUI(tk.Frame):
         config = {"camera":0,"contrast":1,"brightness":1,"auto":1}
         self.__battle.changeCameraConfig(config)
         self.__deltaTime = 0.0
-        self.__counter = 0.0#経過時間のカウンター (試合開始時にリセット)
+        self.__counter = 10.0#経過時間のカウンター (試合開始時にリセット)
 
         self.__battle_update_time = 20
 
