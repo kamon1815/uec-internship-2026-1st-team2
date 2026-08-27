@@ -133,6 +133,7 @@ class GameGUI(tk.Frame):
 
 
     def __loop_button_process(self):
+        self.__started = True
         self.__loop_val = not self.__loop_val
         if self.__loop_val:
             self.__loop.config(bg="red")
