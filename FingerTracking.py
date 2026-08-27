@@ -104,7 +104,7 @@ class Fingertracking():
         if useColor == False:
             gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
             mappedimg = cv2.applyColorMap(gray, colorFillter)
-            debugimg = cv2.applyColorMap(gray, cv2.COLORMAP_JET)
+            debugimg = cv2.applyColorMap(gray, colorFillter)
             debugimg = cv2.cvtColor(debugimg, cv2.COLOR_BGR2RGB)
             frame = cv2.cvtColor(mappedimg, cv2.COLOR_BGR2RGB)
             
@@ -258,7 +258,7 @@ if __name__ == "__main__":
             #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
             finger.configurateContrastAndBrightness(config["contrast"],config["brightness"])
             
-            finger.doTracking(img,debug = True)
+            finger.doTracking(img,debug = True,colorFillter=filter)
             print(finger.getNormalizedPosition().get(0) )
 
         if key == 27:
