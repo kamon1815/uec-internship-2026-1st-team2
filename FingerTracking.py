@@ -122,16 +122,16 @@ class Fingertracking():
         self.raw_results = self.recognizer.recognize(mp_image)
 
         # 検出結果描画
+        
+        if self.raw_results.hand_landmarks:
+            debugimg = self.draw_landmarks_on_image(debugimg, self.raw_results)
+            #print(results.hand_landmarks)
+            # RGB -> BGR
+        debugimg = cv2.cvtColor(
+                debugimg,
+                cv2.COLOR_RGB2BGR
+            )
         if debug:
-            if self.raw_results.hand_landmarks:
-                debugimg = self.draw_landmarks_on_image(debugimg, self.raw_results)
-                #print(results.hand_landmarks)
-                # RGB -> BGR
-            debugimg = cv2.cvtColor(
-                    debugimg,
-                    cv2.COLOR_RGB2BGR
-                )
-
             cv2.imshow("Hand Tracking", debugimg)
 
     def drawLandmarks(self,frame):
@@ -257,7 +257,7 @@ if __name__ == "__main__":
             #img = infinicam.get_frame()
             #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
             finger.configurateContrastAndBrightness(config["contrast"],config["brightness"])
-            finger.doTracking(img,debug = True)
+            finger.doTracking(img,debug = False)
             print(finger.getNormalizedPosition().get(0) )
 
         if key == 27:

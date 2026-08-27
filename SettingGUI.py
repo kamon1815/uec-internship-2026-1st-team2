@@ -47,7 +47,7 @@ class SettingGUI:
         cvui.trackbar(frame, 10, 560, 600, self.contrast,0.0, 2.0)
         #明るさのトラックバー
         cvui.text(frame, 10, 620, '明るさ')
-        cvui.trackbar(frame, 10, 640, 600, self.brightness,-60, 60)
+        cvui.trackbar(frame, 10, 640, 600, self.brightness,-100, 100)
         #強調表示の切り替え
 
         cvui.checkbox(frame,10,10,'コントラスト強調', self.enhanceFilter)
@@ -75,9 +75,12 @@ class SettingGUI:
 
         # コントラスト自動調整
         if self.autocontrast[0]:
-            self.config["contrast"] = 255 / (max_val - min_val)    
+            self.config["contrast"] = (255 / (max_val - min_val))
+            self.contrast[0] = self.config["contrast"] 
+
         #プレビュー用の変換処理
         img = cv2.convertScaleAbs(img,alpha= self.config["contrast"],beta = self.config["brightness"])
+        #グレースケール化
         img = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
         #強調表示がオンの時はフィルタをかける
