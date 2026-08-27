@@ -320,6 +320,7 @@ class Battle:
         self.shotCounter_timeout = 0
         self.rsp_rates = []
         self.rsp_gestures = []
+        self.__finalans.reset_history()
 
     #infinicamの終了処理
     def close(self):
