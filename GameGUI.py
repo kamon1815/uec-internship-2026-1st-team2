@@ -26,8 +26,8 @@ class GameGUI(tk.Frame):
         self.__img_cam_0_state, self.__img_computer_0_state = False, False
         self.__text = None
 
-        self.__canvas_cam = tk.Canvas(self.master, bg= "white", highlightthickness = 0)
-        self.__canvas_computer = tk.Canvas(self.master, bg= "white", highlightthickness = 0)
+        self.__canvas_cam = tk.Canvas(self.master, bg= "white", bd=0, highlightthickness = 0)
+        self.__canvas_computer = tk.Canvas(self.master, bg= "white", bd=0, highlightthickness = 0)
         self.__canvas_setting("camera",False)
         self.__canvas_setting("computer",False)
 
@@ -118,11 +118,11 @@ class GameGUI(tk.Frame):
         if img is not None:
             canvas.create_image(
                 canvas_width / 2,       # 画像表示位置(Canvasの中心)
-                canvas_height / 2,            
+                canvas_height / 2,  
                 image=img,  # 表示画像データ
-                tag= img_type, 
-                anchor=tk.CENTER
+                tag= img_type
             )
+      
 
     def __start_button_process(self):
         self.__battle.reset()
@@ -148,15 +148,17 @@ class GameGUI(tk.Frame):
 
     def __resize_img(self, img, type):
         if type == "camera":
-            w, h, _ = img.shape
+            h, w, _ = img.shape
             self.__canvas_cam.update()
             canvas_width = self.__canvas_cam.winfo_width()
-            canvas_height = self.__canvas_cam.winfo_height()
+            canvas_height = self.__canvas_cam.winfo_height()       
 
-            if canvas_width/w < canvas_height/h:
+            if w / h > canvas_width / canvas_height:
                 img_result = cv2.resize(img, (0, 0), fx=canvas_width/w, fy=canvas_width/w)
             else:
                 img_result = cv2.resize(img, (0, 0), fx=canvas_height/h, fy=canvas_height/h)
+
+            self.__canvas_cam.config(width=canvas_width, height=canvas_height)
        
 
         elif type == "computer":
