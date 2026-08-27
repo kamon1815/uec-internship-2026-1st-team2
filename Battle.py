@@ -35,7 +35,7 @@ class Battle:
         #infinicamとwebカメラをセットアップ
         try:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(988,640,525,2.0,10) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(500,640,525,2.0,10) #fps , 解像度縦横, コントラスト, 明るさ
         except:
             self.__infinicam = None
             pass
@@ -45,6 +45,8 @@ class Battle:
         self.__cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 525)
         print(self.__cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         print(self.__cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        
 
         self.__tracker = Fingertracking(1.0,1.0)
 
@@ -193,7 +195,12 @@ class Battle:
 
         duration = 10 #撮影間隔
         amount = 10 #撮影枚数
-        timeout = 20#撮影失敗時の再試行を許す最大時間
+        timeout = 3#撮影失敗時の再試行を許す最大時間
+
+        if self.cameraMode == 1:
+            duration = 10
+            amount = 10 #撮影枚数
+            timeout = 20#撮影失敗時の再試行を許す最大時間 
 
         ##カメラからの映像を常に表示
         img = self.getCameraImage()
@@ -240,7 +247,10 @@ class Battle:
                     self.__gui.changeText("けん")
                 self.oneshotFlags[3] = False
 
-        if 2.68 <= timeCounter:
+        capture_start_time = 2.68
+        if self.cameraMode == 0 :
+            capture_start_time = 2.4
+        if capture_start_time <= timeCounter:
 
             start_time = 0#処理時間計測用
 
@@ -310,6 +320,7 @@ class Battle:
         self.shotCounter_timeout = 0
         self.rsp_rates = []
         self.rsp_gestures = []
+        self.__finalans.reset_history()
 
     #infinicamの終了処理
     def close(self):
