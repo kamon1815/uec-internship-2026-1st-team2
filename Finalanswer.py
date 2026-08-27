@@ -8,7 +8,7 @@ from collections import Counter
 
 class finalanswer():
     #データの受け皿を作成
-    def __init__(self,history_len, rock_th=0.90, scissor_th=0.50, paper_th=0.90, Confidencethreshold=0.55, truncation_inc=4.0, rateofchange_inc=1.5, rateofchange_th=0.03, appearance_inc=0.6, appearance_th=0.50):
+    def __init__(self,history_len, rock_th=0.77, scissor_th=0.70, paper_th=0.85, Confidencethreshold=0.60, truncation_inc=5.2, rateofchange_inc=3.8, rateofchange_th=0.08, appearance_inc=4.2, appearance_th=0.58):
         self.rate_history =  []
         #履歴リストの最大容量（上限）
         self.history_limit = history_len
@@ -28,6 +28,17 @@ class finalanswer():
         self.b_rateofchange = rateofchange_th
         self.appearance_inclination = appearance_inc
         self.b_appearance = appearance_th
+        print("========== SETTINGS ==========")
+        print("history_limit =", self.history_limit)
+        print("rock_th =", self.thresholds["rock"])
+        print("scissor_th =", self.thresholds["scissor"])
+        print("paper_th =", self.thresholds["paper"])
+        print("Confidencethreshold =", self.Confidencethreshold)
+        print("truncation_inc =", self.truncation_inclination)
+        print("ratechange_inc =", self.ratechange_inclination)
+        print("ratechange_th =", self.b_rateofchange)
+        print("appearance_inc =", self.appearance_inclination)
+        print("appearance_th =", self.b_appearance)
     #初期設定とデータの読み取り
     def  settings_reading(self, rps_rate):
         #過去データの退避
@@ -39,6 +50,12 @@ class finalanswer():
         self.rate_history.append(self.current_rates.copy())
         if len(self.rate_history) > self.history_limit:
             self.rate_history.pop(0)  
+    def reset_history(self):
+        self.rate_history = []
+        self.current_rates = {'rock': 0.0,'scissor': 0.0,'paper': 0.0}
+        self.last_rates = {'rock': 0.0,'scissor': 0.0,'paper': 0.0}
+    
+
 #それぞれの判定
     #数値切り判定
     def  Truncation(self): 
@@ -148,47 +165,77 @@ class finalanswer():
         hand1, conf1 = self.Truncation()
         hand2, conf2 = self.Rateofchange()
         hand3, conf3 = self.statisticalcomparison()
-        print("Truncation     :", hand1, conf1)
-        print("Rateofchange   :", hand2, conf2)
-        print("Statistical    :", hand3, conf3)
+        print("Truncation   :", hand1, conf1)
+        print("Rateofchange :", hand2, conf2)
+        print("Statistical  :", hand3, conf3)
+
         #多数決判定
         votes = []
         if hand1 is not None: votes.append(hand1)
         if hand2 is not None: votes.append(hand2)
         if hand3 is not None: votes.append(hand3)
-        
+        print("hand1 =", hand1, "conf1 =", conf1)
+        print("hand2 =", hand2, "conf2 =", conf2)
+        print("hand3 =", hand3, "conf3 =", conf3)
+        print("votes =", votes)
+        print("gesture =", gesture)
+        print("undetected =", undetected)
         if len(votes) > 0:
             votes_counts = Counter(votes)
             Majorityrule_hand, Majorityrule_count = votes_counts.most_common(1)[0]
+            print("votes_counts =", votes_counts)
+            print("Majorityrule_hand =", Majorityrule_hand)
+            print("Majorityrule_count =", Majorityrule_count)
+
             if Majorityrule_count >= 2:
+                print(">>> 多数決判定")
+                print(">>> result =", Majorityrule_hand)
                 return Majorityrule_hand,"多数決判定"
         #多数決ができない場合のシグモイド関数を用いた自信率比較
             elif   Majorityrule_count <= 1: 
+                print(">>> 多数決不成立")
+                print(">>> 自信率比較へ移行")
                 confidencerate = []
                 if hand1 is not None: confidencerate.append((hand1, conf1))
                 if hand2 is not None: confidencerate.append((hand2, conf2))
                 if hand3 is not None: confidencerate.append((hand3, conf3))
-
+                print("confidencerate =", confidencerate)
                 if len(confidencerate) > 0:
                     bestconfidencerate_canndidate = max(confidencerate, key=lambda x: x[1] )
+                    print("best candidate =", bestconfidencerate_canndidate)
+                    print("best hand =", bestconfidencerate_canndidate[0])
+                    print("best confidence =", bestconfidencerate_canndidate[1])
+                    print("threshold =", self.Confidencethreshold)
+                    print("confidence > threshold ?",bestconfidencerate_canndidate[1],">",self.Confidencethreshold,"=",bestconfidencerate_canndidate[1] > self.Confidencethreshold)
+                    
                     if bestconfidencerate_canndidate[1] > self.Confidencethreshold:
+
+                        print(">>> 自信率判定を採用")
+                        print(">>> result =", bestconfidencerate_canndidate[0])
                         return bestconfidencerate_canndidate[0], "自信率判定"
         #多数決と自信率比較ともにできなかった場合のAI判定            
                     else:
-                       if gesture in ["rock", "scissor", "paper"]:
+                        print(">>> 自信率がthreshold未満")
+                        if gesture in ['rock', 'scissor', 'paper']:
+                           print(">>> AI判定を採用:", gesture)
                            return gesture, "AI判定"
-                       else:
+                        else:
+                           print(">>> AI判定も不可 → 未検出")
                            return undetected,"未検出"            
 
                 else:
-                    if gesture in ["rock", "scissor", "paper"]:
+                    if gesture in ['rock', 'scissor', 'paper']:
+                        print(">>> AI判定を採用:", gesture)
                         return gesture, "AI判定" 
                     else:
+                        print(">>> AI判定も不可 → 未検出")
                         return undetected,"未検出"         
         else:
-            if gesture in ["rock", "scissor", "paper"]:
+            if gesture in ['rock', 'scissor', 'paper']:
+                print(">>> AI判定を採用:", gesture)
                 return gesture, "AI判定"
             else:
+                print(">>> AI判定も不可 → 未検出")
                 return undetected,"未検出"           
                 
           #最終決定判断改良
