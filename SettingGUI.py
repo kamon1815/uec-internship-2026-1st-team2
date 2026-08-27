@@ -22,6 +22,12 @@ class SettingGUI:
     camera_prev_buttonstate = True
 
     def update(self):
+
+        if cv2.getWindowProperty(self.windowname, cv2.WND_PROP_VISIBLE) < 1:
+            print("ウィンドウが閉じられたため、再生成してcvuiを再初期化します。")
+            #cv2.destroyWindow(self.windowname)  # 完全に破棄
+            cvui.init(self.windowname) 
+
         frame = np.zeros((820, 700, 3), np.uint8)
         frame[:] = (49, 52, 49)
 
@@ -114,6 +120,7 @@ class SettingGUI:
         if self.__infinicam != None:
             self.__infinicam.close()
         self.__cap.release()
+        cv2.destroyAllWindows()
         cv2.waitKey(1)
 
 

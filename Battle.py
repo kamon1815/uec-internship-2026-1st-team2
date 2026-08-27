@@ -55,6 +55,7 @@ class Battle:
 
     def changeCameraConfig(self,config):#カメラの設定変更
         self.config = config
+        self.changeCamera(self.config)
 
     def setCameraContrastAndBrightness(self):
         if self.cameraMode == 0:#コントラストや明るさは別クラス担当なのでそっちへ投げる
