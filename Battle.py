@@ -17,13 +17,16 @@ from Finalanswer import finalanswer
 import numpy as np
 import cv2
 import time
-
+from pathlib import Path
+from playsound3 import playsound
 
 class Battle:
 
     battle_window = "BattleWindow"
     rsp_gestures = [] #ジェスチャー認識の結果
     rsp_rates = [] # 手の確率の推定結果
+
+    sound_file_name = {"gu-" : "gu-.wav", "jan" : "jan.wav", "ken": "ken.wav", "pon" : "pon.wav"}
 
     #初期設定
     def __init__(self,cameramode = 0, capturemode = 0, gui = None):
@@ -54,6 +57,11 @@ class Battle:
         self.__finalans = finalanswer(10)
 
         self.__gui = gui
+        BASE_DIR = Path(__file__).resolve().parent
+        sound_path_base = BASE_DIR / "voice"
+        self.__sound_path = {}
+        for type, filename in self.sound_file_name.items():
+            self.__sound_path[type] = sound_path_base / filename
 
     def changeCameraConfig(self,config):#カメラの設定変更
         self.config = config
@@ -223,13 +231,17 @@ class Battle:
                 print("最初は")
                 if self.__gui is not None:
                     self.__gui.changeText("最初は")
+                if self.__sound_path.get("first") is not None:
+                    playsound(self.__sound_path.get("first"))
                 self.oneshotFlags[0] = False
         if 1 < timeCounter <= 2:
             if(self.oneshotFlags[1]):#1度だけ実行
                 print("グー")
                 if self.__gui is not None:
-                    self.__gui.changeText("グー")
                     self.__gui.changeHand("rock")
+                    self.__gui.changeText("グー")
+                if self.__sound_path.get("gu-") is not None:
+                    playsound(self.__sound_path.get("gu-"))
                 self.oneshotFlags[1] = False
 
         if 2 < timeCounter <= 2.5:
@@ -239,12 +251,16 @@ class Battle:
                 if self.__gui is not None:
                     self.__gui.changeText("じゃん")
                     self.__gui.changeHand(None)
+                if self.__sound_path.get("jan") is not None:
+                    playsound(self.__sound_path.get("jan"))
                 self.oneshotFlags[2] = False
-        if 2.5 <= timeCounter <= 2.6:
+        if 2.5 <= timeCounter <= 3.0:
             if(self.oneshotFlags[3]):#1度だけ実行
                 print("けん")
                 if self.__gui is not None:
                     self.__gui.changeText("けん")
+                if self.__sound_path.get("ken") is not None:
+                    playsound(self.__sound_path.get("ken"))
                 self.oneshotFlags[3] = False
 
 
@@ -300,6 +316,8 @@ class Battle:
                 print("ぽん")
                 if self.__gui is not None:
                     self.__gui.changeText("ぽん")
+                if self.__sound_path.get("pon") is not None:
+                    playsound(self.__sound_path.get("pon"))
                 self.oneshotFlags[4] = False
    
         if 7 < timeCounter:

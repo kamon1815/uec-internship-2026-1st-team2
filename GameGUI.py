@@ -33,6 +33,7 @@ class GameGUI(tk.Frame):
 
         self.__start_button = tk.Button(self.master, text= "start", bg = "yellow", command= self.__start_button_process)
         self.__start_button.place(relx=0.85, rely=0.8, relwidth=0.1, relheight=0.05)
+        self.__started = False
 
         setting_button = tk.Button(self.master, text= "setting", bg="green", command= self.__setting_button_process)
         setting_button.place(relx=0.85, rely=0.9, relwidth=0.1, relheight=0.05)
@@ -51,7 +52,7 @@ class GameGUI(tk.Frame):
         config = {"camera":0,"contrast":1,"brightness":1,"auto":1}
         self.__battle.changeCameraConfig(config)
         self.__deltaTime = 0.0
-        self.__counter = 10.0#経過時間のカウンター (試合開始時にリセット)
+        self.__counter = 0.0#経過時間のカウンター (試合開始時にリセット)
 
         self.__battle_update_time = 20
 
@@ -125,6 +126,7 @@ class GameGUI(tk.Frame):
       
 
     def __start_button_process(self):
+        self.__started = True
         self.__battle.reset()
         self.__counter = 0
         self.__start_button.config(bg="gray")
@@ -204,7 +206,7 @@ class GameGUI(tk.Frame):
         start_time = time.time()
         #試合を行う
         
-        ret = self.__battle.battleFlow(self.__counter) #retが0で試合終了を示す
+        ret = self.__battle.battleFlow(self.__counter, (not self.__started)) #retが0で試合終了を示す
         if ret == 0:#試合終了でカウンターをリセット
             start_time = 0
             end_time = 0
