@@ -7,10 +7,6 @@ pip install mediapipe
 - mediapipe tasksのモデルをダウンロードしてください  
   mediapipe_sample内のdownload-requirements.pyを実行することでモデルをダウンロードできます。  
 
-- playsound3をインストールしてください
-```python
-pip install playsound3
-```
 
 ## voiceフォルダーについて
 以下のサイトからダウンロードしました。
