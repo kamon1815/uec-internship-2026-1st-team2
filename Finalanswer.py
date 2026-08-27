@@ -29,7 +29,6 @@ class finalanswer():
         self.b_rateofchange = rateofchange_th
         self.appearance_inclination = appearance_inc
         self.b_appearance = appearance_th
-        print("========== SETTINGS ==========")
         print("history_limit =", self.history_limit)
         print("rock_th =", self.thresholds["rock"])
         print("scissor_th =", self.thresholds["scissor"])
@@ -162,7 +161,7 @@ class finalanswer():
 
 
     #最終決定判断
-    def get_finalanswer(self, gesture, undetected):
+    def get_finalanswer(self):
         # 3つの関数を呼び出す
         hand1, conf1 = self.Truncation()
         hand2, conf2 = self.Rateofchange()
@@ -180,8 +179,6 @@ class finalanswer():
         print("hand2 =", hand2, "conf2 =", conf2)
         print("hand3 =", hand3, "conf3 =", conf3)
         print("votes =", votes)
-        print("gesture =", gesture)
-        print("undetected =", undetected)
         if len(votes) > 0:
             votes_counts = Counter(votes)
             Majorityrule_hand, Majorityrule_count = votes_counts.most_common(1)[0]
