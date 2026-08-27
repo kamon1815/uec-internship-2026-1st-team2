@@ -223,8 +223,8 @@ if __name__ == "__main__":
     finger = Fingertracking(2.4,7)
     cap = cv2.VideoCapture(0)
     settingGUI  = SettingGUI()
-    #infinicam = InfinicamManager()
-    #infinicam.connect(800)
+    infinicam = InfinicamManager()
+    infinicam.connect(988,640,525,2.0,1.0)
     filter = cv2.COLORMAP_JET
 
     state = 1
@@ -253,11 +253,12 @@ if __name__ == "__main__":
                 cap = cv2.VideoCapture(0)
             
         if state == 2:
-            ret,img = cap.read()
-            #img = infinicam.get_frame()
-            #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            #ret,img = cap.read()
+            img,defimg = infinicam.get_frame()
+            img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
             finger.configurateContrastAndBrightness(config["contrast"],config["brightness"])
-            finger.doTracking(img,debug = False)
+            
+            finger.doTracking(img,debug = True)
             print(finger.getNormalizedPosition().get(0) )
 
         if key == 27:
