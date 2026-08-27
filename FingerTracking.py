@@ -253,9 +253,9 @@ if __name__ == "__main__":
                 cap = cv2.VideoCapture(0)
             
         if state == 2:
-            #ret,img = cap.read()
-            img,defimg = infinicam.get_frame()
-            img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+            ret,img = cap.read()
+            #img,defimg = infinicam.get_frame()
+            #img = cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
             finger.configurateContrastAndBrightness(config["contrast"],config["brightness"])
             
             finger.doTracking(img,debug = True)
