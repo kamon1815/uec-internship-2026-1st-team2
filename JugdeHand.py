@@ -81,7 +81,7 @@ class JugdeHand():
             rpsRate[type] = 1 - hand_typeRate
         return rpsRate
 
-    def finPos2rpsRate(self, data, camera = 'infinicam'):
+    def finPos2rpsRate(self, data, camera = 'web'):
         if camera == 'infinicam':
             importance, rps = self.__importance_inf, self.__rps_inf
         else:
