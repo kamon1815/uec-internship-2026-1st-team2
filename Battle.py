@@ -35,7 +35,7 @@ class Battle:
         #infinicamとwebカメラをセットアップ
         try:
             self.__infinicam = InfinicamManager()
-            self.__infinicam.connect(500,640,525,2.0,10) #fps , 解像度縦横, コントラスト, 明るさ
+            self.__infinicam.connect(600,640,525,2.0,10) #fps , 解像度縦横, コントラスト, 明るさ
         except:
             self.__infinicam = None
             pass
@@ -240,24 +240,28 @@ class Battle:
                     self.__gui.changeText("じゃん")
                     self.__gui.changeHand(None)
                 self.oneshotFlags[2] = False
-        if 2.5 <= timeCounter <= 2.9:
+        if 2.5 <= timeCounter <= 2.6:
             if(self.oneshotFlags[3]):#1度だけ実行
                 print("けん")
                 if self.__gui is not None:
                     self.__gui.changeText("けん")
                 self.oneshotFlags[3] = False
 
-        capture_start_time = 2.68
+
+        #画像取得から骨格推定の処理----------------------------------------------------------------------
+        capture_start_time = 2.68 #撮影を開始するタイミング
         if self.cameraMode == 0 :
-            capture_start_time = 2.4
+            capture_start_time = 2.4#infinicamでは少し早めから撮り始める
+
         if capture_start_time <= timeCounter:
 
             start_time = 0#処理時間計測用
 
             if self.shotCounter < amount: #撮影枚数以下なら撮影を試す
+
                 start_time = time.time()#処理時間計測用
 
-                if self.prev_shot_delta_time == 0: #1枚目を撮影
+                if self.prev_shot_delta_time == 0: #撮影
                     if self.computeRPS_Lite():
                         self.shotCounter += 1 #撮影成功時は撮影枚数カウンタを増やす
 
@@ -272,7 +276,8 @@ class Battle:
                     self.prev_shot_delta_time = 0
 
 
-            if self.shotCounter >= amount:#骨格推定と判定
+            if self.shotCounter >= amount:#データが集まったら判定のほうへ結果を渡す
+
                 if self.oneshotFlags[5]:#1度だけ実行
                     end_time = time.time()#処理時間計測
                     print(self.rsp_rates)
@@ -284,9 +289,9 @@ class Battle:
                     for i in range(len(self.rsp_rates)):
                         self.showRpsRate(self.rsp_rates[i],str(i))
                     
-                    #print(self.__finalans.get_finalanswer(self.rsp_gestures,None))
-                    ret_ges,ret_way = self.__finalans.get_finalanswer(self.rsp_gestures,"未検出")
+                    ret_ges,ret_way = self.__finalans.get_finalanswer(self.rsp_gestures,"未検出")#最終判定結果を取得
                     self.showResultImg(ret_ges)#最終結果を結果表示部分に渡す
+
                     print(ret_way)
                     self.oneshotFlags[5] = False
                     
