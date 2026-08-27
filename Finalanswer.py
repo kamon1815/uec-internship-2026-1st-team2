@@ -51,6 +51,7 @@ class finalanswer():
         self.rate_history.append(self.current_rates.copy())
         if len(self.rate_history) > self.history_limit:
             self.rate_history.pop(0)  
+    #昔のデータをリセット
     def reset_history(self):
         self.rate_history = []
         self.current_rates = {'rock': 0.0,'scissor': 0.0,'paper': 0.0}
@@ -214,7 +215,7 @@ class finalanswer():
                         print(">>> 自信率判定を採用")
                         print(">>> result =", bestconfidencerate_canndidate[0])
                         return bestconfidencerate_canndidate[0], "自信率判定"
-        #多数決と自信率比較ともにできなかった場合のAI判定            
+        #多数決と自信率比較ともにできなかった場合の判定(最後の画像で判断→ランダム)         
                     else:
                         print(">>> 自信率がthreshold未満")
                         if conf1 > 0.5:
