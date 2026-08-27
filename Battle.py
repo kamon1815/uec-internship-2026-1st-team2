@@ -18,7 +18,9 @@ import numpy as np
 import cv2
 import time
 from pathlib import Path
-from playsound3 import playsound
+import winsound
+
+
 
 class Battle:
 
@@ -27,6 +29,7 @@ class Battle:
     rsp_rates = [] # 手の確率の推定結果
 
     sound_file_name = {"gu-" : "gu-.wav", "jan" : "jan.wav", "ken": "ken.wav", "pon" : "pon.wav"}
+
 
     #初期設定
     def __init__(self,cameramode = 0, capturemode = 0, gui = None):
@@ -62,6 +65,8 @@ class Battle:
         self.__sound_path = {}
         for type, filename in self.sound_file_name.items():
             self.__sound_path[type] = sound_path_base / filename
+
+
 
     def changeCameraConfig(self,config):#カメラの設定変更
         self.config = config
@@ -232,7 +237,7 @@ class Battle:
                 if self.__gui is not None:
                     self.__gui.changeText("最初は")
                 if self.__sound_path.get("first") is not None:
-                    playsound(self.__sound_path.get("first"))
+                    winsound.PlaySound(self.__sound_path.get("first"), winsound.SND_ASYNC)
                 self.oneshotFlags[0] = False
         if 1 < timeCounter <= 2:
             if(self.oneshotFlags[1]):#1度だけ実行
@@ -241,7 +246,7 @@ class Battle:
                     self.__gui.changeHand("rock")
                     self.__gui.changeText("グー")
                 if self.__sound_path.get("gu-") is not None:
-                    playsound(self.__sound_path.get("gu-"))
+                    winsound.PlaySound(self.__sound_path.get("gu-"), winsound.SND_ASYNC)
                 self.oneshotFlags[1] = False
 
         if 2 < timeCounter <= 2.5:
@@ -252,7 +257,7 @@ class Battle:
                     self.__gui.changeText("じゃん")
                     self.__gui.changeHand(None)
                 if self.__sound_path.get("jan") is not None:
-                    playsound(self.__sound_path.get("jan"))
+                    winsound.PlaySound(self.__sound_path.get("jan"), winsound.SND_ASYNC)
                 self.oneshotFlags[2] = False
         if 2.5 <= timeCounter <= 3.0:
             if(self.oneshotFlags[3]):#1度だけ実行
@@ -260,7 +265,7 @@ class Battle:
                 if self.__gui is not None:
                     self.__gui.changeText("けん")
                 if self.__sound_path.get("ken") is not None:
-                    playsound(self.__sound_path.get("ken"))
+                    winsound.PlaySound(self.__sound_path.get("ken"), winsound.SND_ASYNC)
                 self.oneshotFlags[3] = False
 
 
@@ -316,8 +321,8 @@ class Battle:
                 print("ぽん")
                 if self.__gui is not None:
                     self.__gui.changeText("ぽん")
-                if self.__sound_path.get("pon") is not None:
-                    playsound(self.__sound_path.get("pon"))
+                if self.__sound_path.get("pon") is not None and timeCounter < 7.0:
+                    winsound.PlaySound(self.__sound_path.get("pon"), winsound.SND_ASYNC)
                 self.oneshotFlags[4] = False
    
         if 7 < timeCounter:
