@@ -5,6 +5,7 @@ from pypuclib import Resolution, PUCException, GPUSetup
 import numpy as np
 import math
 from collections import Counter
+import random
 
 class finalanswer():
     #データの受け皿を作成
@@ -216,27 +217,36 @@ class finalanswer():
         #多数決と自信率比較ともにできなかった場合のAI判定            
                     else:
                         print(">>> 自信率がthreshold未満")
-                        if gesture in ['rock', 'scissor', 'paper']:
-                           print(">>> AI判定を採用:", gesture)
-                           return gesture, "AI判定"
+                        if conf1 > 0.5:
+                           print(">>> 最後の画像から採用:", hand1)
+                           return hand1, "最後の画像から判定"
                         else:
-                           print(">>> AI判定も不可 → 未検出")
-                           return undetected,"未検出"            
+                            print(">>> 最後の画像でも不可 → ランダム")
+                            random_gesture = ["rock", "paper", "scissor"]
+                            chosenhand = random.choice(random_gesture)
+                            return chosenhand,"ランダム"            
 
                 else:
-                    if gesture in ['rock', 'scissor', 'paper']:
-                        print(">>> AI判定を採用:", gesture)
-                        return gesture, "AI判定" 
+                    if conf1 > 0.5:
+                        print(">>> 最後の画像から採用:", hand1)
+                        return hand1, "最後の画像判定" 
                     else:
-                        print(">>> AI判定も不可 → 未検出")
-                        return undetected,"未検出"         
+                        print(">>> 最後の画像判定でも不可 → ランダム")
+                        random_gesture = ["rock", "paper", "scissor"]
+                        chosenhand = random.choice(random_gesture)
+                        return chosenhand,"ランダム"            
+                                
         else:
-            if gesture in ['rock', 'scissor', 'paper']:
-                print(">>> AI判定を採用:", gesture)
-                return gesture, "AI判定"
+            print(">>> 自信率がthreshold未満")
+            if conf1 > 0.5:
+                print(">>> 最後の画像から採用:", hand1)
+                return hand1, "最後の画像から判定"
             else:
-                print(">>> AI判定も不可 → 未検出")
-                return undetected,"未検出"           
+                print(">>> 最後の画像でも不可 → ランダム")
+                random_gesture = ["rock", "paper", "scissor"]
+                chosenhand = random.choice(random_gesture)
+                return chosenhand,"ランダム"            
+                         
                 
           #最終決定判断改良
 
