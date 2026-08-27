@@ -26,7 +26,7 @@ class Battle:
     rsp_rates = [] # 手の確率の推定結果
 
     #初期設定
-    def __init__(self,cameramode = 0, capturemode = 0):
+    def __init__(self,cameramode = 0, capturemode = 0, gui = None):
         self.cameraMode = cameramode# 0: inficicamを使用する 1: webカメラを使用する
         self.captureMode = capturemode# 0: 2つの画像で判定(確率の増分での判断に使用)  1: 10枚の画像で判定(統計的判断に使用)
 
@@ -51,6 +51,7 @@ class Battle:
         self.__judge = JugdeHand()
         self.__finalans = finalanswer(10)
 
+        self.__gui = gui
 
     def changeCameraConfig(self,config):#カメラの設定変更
         self.config = config
@@ -99,7 +100,10 @@ class Battle:
 
                 img = self.getCameraImage()
 
-                self.__tracker.doTracking(img,debug=True,useColor=True)
+                if self.__gui is not None and self.__gui.debug == False:
+                    self.__tracker.doTracking(img,debug=False,useColor=True)
+                else:
+                    self.__tracker.doTracking(img,debug=True,useColor=True)
                 
                 if self.__tracker.getNormalizedPosition().get(0) != None: #トラッキング成功時はそれを判定へ回す
                     #print(trial)#試行回数を表示 (デバッグ)
@@ -112,7 +116,10 @@ class Battle:
             self.__finalans.settings_reading(rate)
             if i < amount-1:
                 time.sleep(duration /1000)
-            self.fingertracker.doTracking(img,debug = True)
+            if self.__gui is not None:
+                self.fingertracker.doTracking(img,debug=False)
+            else:
+                self.fingertracker.doTracking(img,debug=True)
         return rsp_rates,rsp_gestures
 
 
@@ -123,7 +130,10 @@ class Battle:
 
         img = self.getCameraImage()
         #骨格推定を実行
-        self.__tracker.doTracking(img,debug=True)
+        if self.__gui is not None and self.__gui.debug == False:
+            self.__tracker.doTracking(img,debug=False)
+        else:
+            self.__tracker.doTracking(img,debug=True)
                 
         if self.__tracker.getNormalizedPosition().get(0) == None: #トラッキング成功時はそれを判定へ回す
             return False
@@ -147,18 +157,26 @@ class Battle:
             img[110:190 ,0:int(rpsRate['scissor']*500)] = (0,255,0)
         if rpsRate['rock'] is not None: 
             img[210:290 ,0:int(rpsRate['paper']*500)] = (255,0,0)
-        cv2.imshow(name, img)
+
+        if self.__gui is None:
+            cv2.imshow(name, img)
 
 
     #入力した結果に対して勝つ手を表示する -------------------------------------------------------------------------------------------------------------
     def showResultImg(self,ret):
         match ret:
             case "rock":
-                print("相手：パー")
+                print("相手：パー")     
+                if self.__gui is not None:
+                    self.__gui.changeHand("paper")
             case "scissor":
                 print("相手：グー")
+                if self.__gui is not None:
+                    self.__gui.changeHand("rock")
             case "paper":
-                print("相手：チョキ")     
+                print("相手：チョキ")  
+                if self.__gui is not None:
+                    self.__gui.changeHand("scissor") 
 
 
 
@@ -170,33 +188,55 @@ class Battle:
     oneshotFlags = [True] * 6   #タイムラインで1度だけ実行部分を作るためのフラグ
 
     # 1試合分の一連の処理を行います ----------------------------------------------------------------------------------------------------------------------------------
-    def playOneMatch(self,timeCounter):#timeCounterには試合開始時を0とした秒数が入ります。
+    def playOneMatch(self,timeCounter, beforeStart=False):#timeCounterには試合開始時を0とした秒数が入ります。
 
         duration = 10 #撮影間隔
         amount = 10 #撮影枚数
         timeout = 20#撮影失敗時の再試行を許す最大時間
 
         ##カメラからの映像を常に表示
-        cv2.imshow(self.battle_window,self.getCameraImage())
+        img = self.getCameraImage()
+
+        if self.__gui is not None:
+            if 3.3 <= timeCounter < 7 and beforeStart == False: #手を出した瞬間の映像を少し保持しておく
+                img = self.__img_pon
+            else:
+                self.__img_pon = img
+            self.__gui.setCameraImage(img)
+        else:
+            cv2.imshow(self.battle_window,img)
         self.setCameraContrastAndBrightness()
 
+        if beforeStart:
+            return
+        
         if 0 < timeCounter <= 1:
             if(self.oneshotFlags[0]):#1度だけ実行
                 print("最初は")
+                if self.__gui is not None:
+                    self.__gui.changeText("最初は")
                 self.oneshotFlags[0] = False
         if 1 < timeCounter <= 2:
             if(self.oneshotFlags[1]):#1度だけ実行
                 print("グー")
+                if self.__gui is not None:
+                    self.__gui.changeText("グー")
+                    self.__gui.changeHand("rock")
                 self.oneshotFlags[1] = False
 
         if 2 < timeCounter <= 2.5:
             if(self.oneshotFlags[2]):#1度だけ実行
 
                 print("じゃん")
+                if self.__gui is not None:
+                    self.__gui.changeText("じゃん")
+                    self.__gui.changeHand(None)
                 self.oneshotFlags[2] = False
         if 2.5 <= timeCounter <= 2.9:
             if(self.oneshotFlags[3]):#1度だけ実行
                 print("けん")
+                if self.__gui is not None:
+                    self.__gui.changeText("けん")
                 self.oneshotFlags[3] = False
 
         if 2.68 <= timeCounter:
@@ -210,14 +250,14 @@ class Battle:
                     if self.computeRPS_Lite():
                         self.shotCounter += 1 #撮影成功時は撮影枚数カウンタを増やす
 
-                        self.prev_shot_delta_time = counter #次のフレームの撮影まで待機させたいのでカウンタでいろいろやる。
+                        self.prev_shot_delta_time = timeCounter #次のフレームの撮影まで待機させたいのでカウンタでいろいろやる。
 
-                    elif counter - self.prev_shot_delta_time > timeout / 1000: #撮影失敗時は再試行するが、指定時間を超えたら撮影をあきらめる
+                    elif timeCounter - self.prev_shot_delta_time > timeout / 1000: #撮影失敗時は再試行するが、指定時間を超えたら撮影をあきらめる
                         self.shotCounter += 1
                         self.shotCounter_timeout += 1
 
 
-                elif counter - self.prev_shot_delta_time  > duration /1000 : #撮影間隔を空けるための部分
+                elif timeCounter - self.prev_shot_delta_time  > duration /1000 : #撮影間隔を空けるための部分
                     self.prev_shot_delta_time = 0
 
 
@@ -242,17 +282,22 @@ class Battle:
         if 3.0 <= timeCounter:
             if(self.oneshotFlags[4]):
                 print("ぽん")
+                if self.__gui is not None:
+                    self.__gui.changeText("ぽん")
                 self.oneshotFlags[4] = False
    
         if 7 < timeCounter:
+            if self.__gui is not None:
+                self.__gui.changeText("")
+                self.__gui.changeHand(None)
             return 0
 
 
     #試合の一連を処理します ------------------------------------------------------------------------------------------------------------------------------------------
-    def battleFlow(self,timeCounter): 
+    def battleFlow(self,timeCounter, beforeStart=False): 
 
 
-        if self.playOneMatch(timeCounter) == 0: #試合が終わったらそれを呼び出し元に通知
+        if self.playOneMatch(timeCounter, beforeStart) == 0: #試合が終わったらそれを呼び出し元に通知
             return 0
         return 1
 
